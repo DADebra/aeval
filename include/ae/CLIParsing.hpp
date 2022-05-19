@@ -40,3 +40,18 @@ char * getSmtFileName(int num, int argc, char ** argv)
   }
   return NULL;
 }
+
+char * getSyGuSFileName(int num, int argc, char ** argv)
+{
+  int num1 = 1;
+  for (int i = 1; i < argc; i++)
+  {
+    int len = strlen(argv[i]);
+    if (len >= 5 && strcmp(argv[i] + len - 3, ".sl") == 0)
+    {
+      if (num1 == num) return argv[i];
+      else num1++;
+    }
+  }
+  return NULL;
+}
