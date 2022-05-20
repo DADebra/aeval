@@ -691,6 +691,7 @@ namespace ufo
         if (isOpX<LT>(e)) os << "(< ";
         if (isOpX<GT>(e)) os << "(> ";
         if (isOpX<NEQ>(e)) os << "(distinct ";
+        assert(e->arity() == 2);
         print(e->left(), os);
         os << " ";
         print(e->right(), os);
@@ -704,6 +705,24 @@ namespace ufo
         print(e->right(), os);
         os << " ";
         print(e->last(), os);
+        os << ")";
+      }
+      else if (isOp<NumericOp>(e))
+      {
+        if (isOpX<PLUS>(e)) os << "(+ ";
+        if (isOpX<MINUS>(e)) os << "(- ";
+        if (isOpX<MULT>(e)) os << "(* ";
+        if (isOpX<DIV>(e)) os << "(/ ";
+        if (isOpX<IDIV>(e)) os << "(/ ";
+        if (isOpX<MOD>(e)) os << "(mod ";
+        if (isOpX<REM>(e)) os << "(mod ";
+        if (isOpX<UN_MINUS>(e)) os << "(- ";
+        if (isOpX<ABS>(e)) os << "(abs ";
+        for (int i = 0; i < e->arity(); ++i)
+        {
+          print(e->arg(i), os);
+          if (i != e->arity() - 1) os << " ";
+        }
         os << ")";
       }
       else os << z3.toSmtLib (e);
