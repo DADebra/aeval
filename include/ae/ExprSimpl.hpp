@@ -940,12 +940,26 @@ namespace ufo
 
   inline static Expr simplifyPlus (Expr exp)
   {
+    if (!isOpX<PLUS>(exp))
+      return exp;
     ExprVector plsOps;
-    getAddTerm (exp, plsOps);
+    unordered_map<Expr,cpp_int> count;
+    Expr intty = mk<INT_TY>(exp->efac());
+    for (int i = 0; i < exp->arity(); ++i)
+    {
+      count[exp->arg(i)]++;
+      assert(typeOf(exp->arg(i)) == intty);
+    }
+    for (const auto &kv : count)
+      if (kv.second == 1)
+        plsOps.push_back(kv.first);
+      else
+        plsOps.push_back(mk<MULT>(mkMPZ(kv.second, exp->efac()), kv.first));
+
     cpp_int c = separateConst(plsOps);
     std::sort(plsOps.begin(), plsOps.end(), [](Expr& x, Expr& y) {return x < y;});
-    // GF: to write some kind of a fold-operator that counts the numbers of occurences
     if (c != 0) plsOps.push_back(mkMPZ(c, exp->getFactory()));
+
     return mkplus(plsOps, exp->getFactory());
   }
 
