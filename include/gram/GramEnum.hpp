@@ -44,13 +44,15 @@ class GramEnum
 
   tribool lastSolverRes;
 
-  ConstMap constMap;
+  ConstMap progConsts, staticConsts;
   // True if we're in constant enumeration mode.
   bool enumeratingConsts = false;
+  bool usingStaticConsts = false;
   // Don't recreate a traversal for each time we need to enumerate consts;
   //   instead, cache them and just call 'Restart' when we need them again.
   // K: # of consts to generate, V: Grammar+Traversal for them
-  unordered_map<int,pair<Grammar,Traversal*>> constTravs;
+  typedef unordered_map<int,pair<Grammar,Traversal*>> ConstTravMap;
+  ConstTravMap constTravs, staticConstTravs;
 
   bool shoulddefer(Grammar& gram, const Expr& nt, const Expr& expand)
   {
@@ -140,6 +142,33 @@ class GramEnum
 
   }
 
+  void fillStaticConsts(Expr sort)
+  {
+    const static auto consts = {-1, 0, 1};
+    auto itr = staticConsts.find(sort);
+    if (itr != staticConsts.end())
+      return;
+
+    if (isOpX<BVSORT>(sort))
+    {
+      unsigned width = bv::width(sort);
+      for (int i : consts)
+        staticConsts[sort].insert(bv::bvnum(mpz_class(i), width, sort->efac()));
+    }
+    else if (isOpX<INT_TY>(sort))
+    {
+      for (int i : consts)
+        staticConsts[sort].insert(mkTerm(mpz_class(i), sort->efac()));
+    }
+    else if (isOpX<REAL_TY>(sort))
+    {
+      for (int i : consts)
+        staticConsts[sort].insert(mkTerm(mpq_class(i, 1), sort->efac()));
+    }
+    else
+      assert(0 && "Unable to add static constants for given sort");
+  }
+
   // Order of constants (existentially-quantified variables) in traversal's
   // FAPP
   vector<Expr> getConstsOrder()
@@ -151,47 +180,66 @@ class GramEnum
     return vector<Expr>(anyconsts.begin(), anyconsts.end());
   }
 
-  void restartConstTrav(const vector<Expr>& consts)
+  void createConstTrav(ConstTravMap& travs,
+    const vector<Expr>& constorder, const ConstMap& consts)
   {
-    ExprFactory& efac(consts[0]->efac());
-    auto itr = constTravs.find(consts.size());
-    if (itr == constTravs.end())
+    // Create new traversal
+    ExprFactory& efac(constorder[0]->efac());
+    Grammar cgram;
+    NT root = gram.addNt(
+      mkConst(mkTerm(string("Root"), efac), mk<BOOL_TY>(efac)));
+    cgram.setRoot(root);
+
+    ExprVector rootdeclargs;
+    rootdeclargs.push_back(mkTerm(string("All-Constants"), efac));
+    for (const Expr& c : constorder)
+      rootdeclargs.push_back(typeOf(c));
+    rootdeclargs.push_back(mk<BOOL_TY>(efac)); // Sort unimportant
+    Expr rootdecl = mknary<FDECL>(rootdeclargs);
+
+    ExprVector rootappargs;
+    rootappargs.push_back(rootdecl);
+    for (const Expr& c : constorder)
+      rootappargs.push_back(CFGUtils::constsNtName(typeOf(c)));
+    Expr rootapp = mknary<FAPP>(rootappargs);
+
+    cgram.addProd(root, rootapp);
+    for (const auto& kv : consts)
+      for (const Expr& c : kv.second)
+        cgram.addConst(c);
+
+    TravParams paramscopy = params;
+    paramscopy.method = TPMethod::NEWTRAV;
+
+    auto itr = travs.emplace(constorder.size(), std::move(make_pair(
+      std::move(cgram), nullptr))).first;
+    // If we initialize traversal before emplace, it's reference
+    // to the Grammar will be wrong.
+    Traversal *ctrav = new NewTrav(itr->second.first, paramscopy,
+        [&] (const Expr& ei, const Expr& exp) { return false; });
+    itr->second.second = ctrav;
+  }
+
+  void restartConstTrav(const vector<Expr>& constorder, bool staticconsts)
+  {
+    ExprFactory& efac(constorder[0]->efac());
+    ConstTravMap *con;
+    ConstMap *consts;
+    if (staticconsts)
     {
-      // Create new traversal
-      Grammar cgram;
-      NT root = gram.addNt(
-        mkConst(mkTerm(string("Root"), efac), mk<BOOL_TY>(efac)));
-      cgram.setRoot(root);
-
-      ExprVector rootdeclargs;
-      rootdeclargs.push_back(mkTerm(string("All-Constants"), efac));
-      for (const Expr& c : consts)
-        rootdeclargs.push_back(typeOf(c));
-      rootdeclargs.push_back(mk<BOOL_TY>(efac)); // Sort unimportant
-      Expr rootdecl = mknary<FDECL>(rootdeclargs);
-
-      ExprVector rootappargs;
-      rootappargs.push_back(rootdecl);
-      for (const Expr& c : consts)
-        rootappargs.push_back(CFGUtils::constsNtName(typeOf(c)));
-      Expr rootapp = mknary<FAPP>(rootappargs);
-
-      cgram.addProd(root, rootapp);
-      for (const auto& kv : constMap)
-        for (const Expr& c : kv.second)
-          cgram.addConst(c);
-
-      TravParams paramscopy = params;
-      paramscopy.method = TPMethod::NEWTRAV;
-
-      // If we initialize traversal before emplace, it's reference
-      // to the Grammar will be wrong.
-      auto itr = constTravs.emplace(consts.size(), std::move(make_pair(
-        std::move(cgram), nullptr))).first;
-      Traversal *ctrav = new NewTrav(itr->second.first, paramscopy,
-          [&] (const Expr& ei, const Expr& exp) { return false; });
-      itr->second.second = ctrav;
+      con = &staticConstTravs;
+      consts = &staticConsts;
+      for (const Expr& var : constorder)
+        fillStaticConsts(typeOf(var));
     }
+    else
+    {
+      con = &constTravs;
+      consts = &progConsts;
+    }
+    auto itr = con->find(constorder.size());
+    if (itr == con->end())
+      createConstTrav(*con, constorder, *consts);
     else
       itr->second.second->Restart();
   }
@@ -202,7 +250,11 @@ class GramEnum
   {
     vector<Expr> consts = std::move(getConstsOrder());
 
-    Traversal* ctrav = constTravs.at(consts.size()).second;
+    Traversal* ctrav;
+    if (usingStaticConsts)
+      ctrav = staticConstTravs.at(consts.size()).second;
+    else
+      ctrav = constTravs.at(consts.size()).second;
     ParseTree cand = ctrav->Increment();
     if (ctrav->IsDone())
       enumeratingConsts = false;
@@ -247,7 +299,7 @@ class GramEnum
     Restart();
   }
 
-  void SetConsts(const ConstMap& cmap) { constMap = cmap; }
+  void SetConsts(const ConstMap& cmap) { progConsts = cmap; }
 
   void Restart()
   {
@@ -312,18 +364,24 @@ class GramEnum
     lastSolverRes = res;
     if (indeterminate(res))
     {
-      if (enumeratingConsts)
-        // If solver returned unknown with consts, then we assume any further
-        // constants will also do so for efficiency.
-        enumeratingConsts = false;
+      if (enumeratingConsts && !usingStaticConsts)
+      {
+        // If solver returned unknown with consts, then we assume that most
+        // other consts will also do so. Still, try {-1, 0, 1} since those
+        // tend to be the ones we need.
+        usingStaticConsts = true;
+        restartConstTrav(getConstsOrder(), true);
+      }
       else
+      //if (!enumeratingConsts)
       {
         if (GetCurrUniqueVars().size() == 0)
           return; // Nothing further to enumerate for this candidate
 
         // Else, we need to try to eliminate the quantifier ourselves.
-        restartConstTrav(getConstsOrder());
+        restartConstTrav(getConstsOrder(), false);
         enumeratingConsts = true;
+        usingStaticConsts = false;
         lastanyconstpt = lastpt; // The ParseTree to elim quants from
       }
     }

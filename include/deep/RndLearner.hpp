@@ -1264,7 +1264,7 @@ namespace ufo
         m_smt_solver.reset();
         curCandidates[i] = sfs[i].back().getAllLemmas();
       }
-      assert(checkCandidates());
+      assert(bool(checkCandidates()));
       bool success = checkSafety();
       if (!success)
         for (int i = 0; i < invNumber; ++i)
