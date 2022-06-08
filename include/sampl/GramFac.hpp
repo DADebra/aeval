@@ -4,9 +4,6 @@
 #include "ae/ExprSimpl.hpp"
 #include "deep/Distribution.hpp"
 
-typedef unordered_set<ufo::Expr> ExprUSet;
-typedef unordered_map<ufo::Expr, ufo::Expr> ExprUMap;
-
 #include "gram/AllHeaders.hpp"
 
 using namespace std;
@@ -167,15 +164,32 @@ namespace ufo
           gram->addConst(c);
 
       initialized = true;
+      gramenum.SetConsts(consts);
       gramenum.SetParams(tparams);
     }
 
-    void printSygusGram()
+    void markSolverResult(tribool res)
+    {
+      return gramenum.MarkSolverResult(res);
+    }
+
+    // True if last candidate used ANY_*_CONST
+    bool lastHasAnyConst() const
+    {
+      return gramenum.GetCurrUniqueVars().size() != 0;
+    }
+
+    Expr replaceConsts(Expr cand, ZSolver<EZ3>::Model* model) const
+    {
+      return gramenum.ReplaceConsts(cand, model);
+    }
+
+    void printSygusGram() const
     {
       outs() << CFGUtils::toSyGuS(*gram, z3);
     }
 
-    int getCurrDepth()
+    int getCurrDepth() const
     {
       return gramenum.GetCurrDepth();
     }

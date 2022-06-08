@@ -39,7 +39,18 @@ class GramEnum
   TravParams params;
 
   ParseTree lastpt;
+  ParseTree lastanyconstpt;
   Expr lastexpr;
+
+  tribool lastSolverRes;
+
+  ConstMap constMap;
+  // True if we're in constant enumeration mode.
+  bool enumeratingConsts = false;
+  // Don't recreate a traversal for each time we need to enumerate consts;
+  //   instead, cache them and just call 'Restart' when we need them again.
+  // K: # of consts to generate, V: Grammar+Traversal for them
+  unordered_map<int,pair<Grammar,Traversal*>> constTravs;
 
   bool shoulddefer(Grammar& gram, const Expr& nt, const Expr& expand)
   {
@@ -129,6 +140,81 @@ class GramEnum
 
   }
 
+  // Order of constants (existentially-quantified variables) in traversal's
+  // FAPP
+  vector<Expr> getConstsOrder()
+  {
+    const auto& uniqvars = GetCurrUniqueVars();
+    // TODO: Support for synthesizing more than one type of constant
+    assert(uniqvars.size() == 1);
+    const auto& anyconsts = uniqvars.begin()->second;
+    return vector<Expr>(anyconsts.begin(), anyconsts.end());
+  }
+
+  void restartConstTrav(const vector<Expr>& consts)
+  {
+    ExprFactory& efac(consts[0]->efac());
+    auto itr = constTravs.find(consts.size());
+    if (itr == constTravs.end())
+    {
+      // Create new traversal
+      Grammar cgram;
+      NT root = gram.addNt(
+        mkConst(mkTerm(string("Root"), efac), mk<BOOL_TY>(efac)));
+      cgram.setRoot(root);
+
+      ExprVector rootdeclargs;
+      rootdeclargs.push_back(mkTerm(string("All-Constants"), efac));
+      for (const Expr& c : consts)
+        rootdeclargs.push_back(typeOf(c));
+      rootdeclargs.push_back(mk<BOOL_TY>(efac)); // Sort unimportant
+      Expr rootdecl = mknary<FDECL>(rootdeclargs);
+
+      ExprVector rootappargs;
+      rootappargs.push_back(rootdecl);
+      for (const Expr& c : consts)
+        rootappargs.push_back(CFGUtils::constsNtName(typeOf(c)));
+      Expr rootapp = mknary<FAPP>(rootappargs);
+
+      cgram.addProd(root, rootapp);
+      for (const auto& kv : constMap)
+        for (const Expr& c : kv.second)
+          cgram.addConst(c);
+
+      TravParams paramscopy = params;
+      paramscopy.method = TPMethod::NEWTRAV;
+
+      // If we initialize traversal before emplace, it's reference
+      // to the Grammar will be wrong.
+      auto itr = constTravs.emplace(consts.size(), std::move(make_pair(
+        std::move(cgram), nullptr))).first;
+      Traversal *ctrav = new NewTrav(itr->second.first, paramscopy,
+          [&] (const Expr& ei, const Expr& exp) { return false; });
+      itr->second.second = ctrav;
+    }
+    else
+      itr->second.second->Restart();
+  }
+
+  // Called when Z3 returned 'unknown' for ANY_*_CONST, so we need to attempt
+  //   to eliminate the quantifier ourselves.
+  ParseTree getCandidate_Consts()
+  {
+    vector<Expr> consts = std::move(getConstsOrder());
+
+    Traversal* ctrav = constTravs.at(consts.size()).second;
+    ParseTree cand = ctrav->Increment();
+    if (ctrav->IsDone())
+      enumeratingConsts = false;
+    assert(cand.children().size() == 1);
+    cand = cand.children()[0];
+    assert(cand.children().size() == consts.size() + 1);
+    unordered_map<Expr,const ParseTree> replMap;
+    for (int i = 1; i < cand.children().size(); ++i)
+      replMap.emplace(consts[i - 1], cand.children()[i]);
+    return ParseTree::replaceAll(lastanyconstpt, replMap);
+  }
+
   public:
 
   int debug;
@@ -149,6 +235,9 @@ class GramEnum
       delete traversal;
       traversal = NULL;
     }
+    for (const auto& kv : constTravs)
+      if (kv.second.second)
+        delete kv.second.second;
   }
 
   void SetGrammar(Grammar& _gram)
@@ -157,6 +246,8 @@ class GramEnum
     gramReset();
     Restart();
   }
+
+  void SetConsts(const ConstMap& cmap) { constMap = cmap; }
 
   void Restart()
   {
@@ -213,8 +304,47 @@ class GramEnum
     return traversal->GetCurrDepth();
   }
 
-  const ExprUSet& GetCurrUniqueVars() const
+  const UniqVarMap& GetCurrUniqueVars() const
   { return traversal->GetCurrUniqueVars(); }
+
+  void MarkSolverResult(tribool res)
+  {
+    lastSolverRes = res;
+    if (indeterminate(res))
+    {
+      if (enumeratingConsts)
+        // If solver returned unknown with consts, then we assume any further
+        // constants will also do so for efficiency.
+        enumeratingConsts = false;
+      else
+      {
+        if (GetCurrUniqueVars().size() == 0)
+          return; // Nothing further to enumerate for this candidate
+
+        // Else, we need to try to eliminate the quantifier ourselves.
+        restartConstTrav(getConstsOrder());
+        enumeratingConsts = true;
+        lastanyconstpt = lastpt; // The ParseTree to elim quants from
+      }
+    }
+    else if (res && enumeratingConsts)
+      enumeratingConsts = false; // We found the constants we were looking for
+  }
+
+  Expr ReplaceConsts(Expr cand, ZSolver<EZ3>::Model* model) const
+  {
+    assert(model);
+    ExprUMap replMap;
+    for (const auto& kv : GetCurrUniqueVars())
+      for (const auto& expans : kv.second)
+        replMap[expans] = model->eval(expans);
+    if (replMap.size() == 1)
+    {
+      const auto itr = replMap.begin();
+      return replaceAll(cand, itr->first, itr->second);
+    }
+    return replaceAll(cand, replMap);
+  }
 
   Expr Increment()
   {
@@ -224,9 +354,11 @@ class GramEnum
     // Generate a new candidate from the grammar, and simplify
     while (!nextcand)
     {
-      if (traversal->IsDone() && deferred_cands.size() == 0)
+      if (enumeratingConsts)
+        nextpt = getCandidate_Consts();
+      else if (traversal->IsDone() && deferred_cands.size() == 0)
         return NULL;
-      if (!traversal->IsDepthDone() || deferred_cands.size() == 0)
+      else if (!traversal->IsDepthDone() || deferred_cands.size() == 0)
       {
         nextpt = traversal->Increment();
         if (debug && traversal->IsDepthDone())

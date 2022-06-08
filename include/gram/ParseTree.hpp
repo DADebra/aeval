@@ -41,6 +41,29 @@ class ParseTree
 {
   std::shared_ptr<ParseTreeNode> ptr;
 
+  static ParseTree replaceAllHelper(const ParseTree& pt, const unordered_map<Expr,const ParseTree>& replMap)
+  {
+    if (!pt.ptr)
+      return NULL;
+    auto itr = replMap.find(pt.ptr->data);
+    ParseTree ret;
+    if (itr != replMap.end())
+      ret = itr->second;
+    else
+      ret = pt;
+    vector<ParseTree> newchildren;
+    bool changed = false;
+    for (const ParseTree& child : ret.ptr->children)
+    {
+      newchildren.push_back(std::move(replaceAllHelper(child, replMap)));
+      changed |= newchildren.back().ptr != child.ptr;
+    }
+    if (!changed)
+      return ret;
+    else
+      return ParseTree(ret.data(), std::move(newchildren), ret.isNt());
+  }
+
   public:
   ParseTree(Expr _data, const vector<ParseTree>& _children, bool _isnt) :
     ptr(new ParseTreeNode(_data, _children, _isnt)) {}
@@ -110,6 +133,7 @@ class ParseTree
       return data();
     else if (children().size() == 1)
     {
+      // TODO: Ugly hack for 'ANY_*_CONST'
       if (!isNt() && !isOpX<FAPP>(data()))
         return mk(data()->op(), children()[0].toExpr());
       return children()[0].toExpr();
@@ -156,6 +180,18 @@ class ParseTree
 
       return func(nt, *realexpan);
     });
+  }
+
+  static ParseTree replaceAll(const ParseTree& pt, const unordered_map<Expr,const ParseTree>& replMap)
+  {
+    ParseTree oldret;
+    ParseTree newret = pt;
+    do
+    {
+      oldret = newret;
+      newret = replaceAllHelper(newret, replMap);
+    } while (newret != oldret);
+    return std::move(newret);
   }
 
   void print(ostream& os, int depth = 0) const

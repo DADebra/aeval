@@ -32,6 +32,7 @@ namespace ufo
     ExprVector curCandidates;
     ExprVector noStrenCands;
     bool changedCandidates = false;
+    vector<bool> hasAnyConst;
 
     vector<map<int, Expr>> invarVars;
     vector<ExprVector> invarVarsShort;
@@ -106,19 +107,48 @@ namespace ufo
       return res;
     }
 
-    bool checkCandidates()
+    // Set 'quantifyVars' to universally-quantify all clause variables
+    tribool checkCandidates()
     {
+      bool gotindeterminate = false;
       for (auto &hr: ruleManager.chcs)
       {
         if (hr.isQuery) continue;
 
         m_smt_solver.reset();
 
-        int ind1;  // to be identified later
+        bool quantifyVars = false;
         int ind2 = getVarIndex(hr.dstRelation, decls);
+        quantifyVars |= hasAnyConst[ind2];
+        int ind1;
+        if (!isOpX<TRUE>(hr.srcRelation))
+        {
+          ind1 = getVarIndex(hr.srcRelation, decls);
+          quantifyVars |= hasAnyConst[ind1];
+        }
+        else
+          ind1 = ind2;
+
+        assert(!quantifyVars);
+
+        ExprVector faArgs, conjArgs;
+
+        if (quantifyVars)
+        {
+          for (const Expr& var : hr.srcVars)
+            faArgs.push_back(bind::fname(var));
+          for (const Expr& var : hr.dstVars)
+            faArgs.push_back(bind::fname(var));
+          for (const Expr& var : hr.locVars)
+            faArgs.push_back(bind::fname(var));
+        }
 
         // pushing body
-        m_smt_solver.assertExpr (hr.body);
+        if (!quantifyVars)
+          m_smt_solver.assertExpr (hr.body);
+        else
+          conjArgs.push_back(hr.body);
+
         Expr cand1;
         Expr cand2;
         Expr lmApp;
@@ -126,32 +156,45 @@ namespace ufo
         // pushing src relation
         if (!isOpX<TRUE>(hr.srcRelation))
         {
-          ind1 = getVarIndex(hr.srcRelation, decls);
           SamplFactory& sf1 = sfs[ind1].back();
 
           lmApp = sf1.getAllLemmas();
           lmApp = replaceAll(lmApp, invarVarsShort[ind1], hr.srcVars);
-          m_smt_solver.assertExpr(lmApp);
+          if (!quantifyVars)
+            m_smt_solver.assertExpr(lmApp);
+          else
+            conjArgs.push_back(lmApp);
 
           cand1 = curCandidates[ind1];
           cand1 = replaceAll(cand1, invarVarsShort[ind1], hr.srcVars);
 
-          m_smt_solver.push();
-
-          m_smt_solver.assertExpr(cand1);
+          if (!quantifyVars)
+          {
+            m_smt_solver.push();
+            m_smt_solver.assertExpr(cand1);
+          }
+          else
+            conjArgs.push_back(cand1);
         }
 
         // pushing dst relation
         cand2 = curCandidates[ind2];
         cand2 = replaceAll(cand2, invarVarsShort[ind2], hr.dstVars);
 
-        m_smt_solver.assertExpr(mk<NEG>(cand2));
+        if (!quantifyVars)
+          m_smt_solver.assertExpr(mk<NEG>(cand2));
+        else
+        {
+          faArgs.push_back(mk<IMPL>(conjoin(conjArgs, m_efac), cand2));
+          m_smt_solver.assertExpr(mknary<FORALL>(faArgs));
+        }
 
         numOfSMTChecks++;
         boost::tribool res = m_smt_solver.solve ();
-        if (!isOpX<TRUE>(hr.srcRelation))
+        tribool isind = quantifyVars ? res : !res;
+        if (!isOpX<TRUE>(hr.srcRelation) && !quantifyVars)
           m_smt_solver.pop();
-        if (res || indeterminate(res))    // SAT   == candidate failed
+        if (!isind || indeterminate(isind))    // SAT   == candidate failed
         {
           if (strenOrWeak & 2)
           {
@@ -161,7 +204,10 @@ namespace ufo
               {
                 cand1 = noStrenCands[ind1];
                 cand1 = replaceAll(cand1, invarVarsShort[ind1], hr.srcVars);
-                m_smt_solver.assertExpr(cand1);
+                if (!quantifyVars)
+                  m_smt_solver.assertExpr(cand1);
+                else
+                  conjArgs[2] = cand1;
               }
               else
                 m_smt_solver.assertExpr(cand1);
@@ -169,19 +215,28 @@ namespace ufo
 
             cand2 = noStrenCands[ind2];
             cand2 = replaceAll(cand2, invarVarsShort[ind2], hr.dstVars);
-            m_smt_solver.assertExpr(mk<NEG>(cand2));
+            if (!quantifyVars)
+              m_smt_solver.assertExpr(mk<NEG>(cand2));
+            else
+            {
+              m_smt_solver.reset();
+              faArgs.back() = mk<IMPL>(mknary<AND>(conjArgs), cand2);
+              m_smt_solver.assertExpr(mknary<FORALL>(faArgs));
+            }
             res = m_smt_solver.solve();
-            if (!res)
+            isind = quantifyVars ? res : !res;
+            if (isind)
             {
               changedCandidates = true;
               curCandidates[ind2] = noStrenCands[ind2];
             }
           }
-          if (res || indeterminate(res))
+          if (!isind || indeterminate(isind))
           {
+            if (indeterminate(isind)) gotindeterminate = true;
             if (printLog >= 2)
             {
-              if (indeterminate(res)) outs () << "CTI unknown\n";
+              if (indeterminate(isind)) outs () << "CTI unknown\n";
               else
               {
                 auto m = m_smt_solver.getModelPtr();
@@ -209,10 +264,115 @@ namespace ufo
             return checkCandidates();
           }
         }
+        // Else, good candidates
+        if (hr.isInductive && quantifyVars)
+        {
+          SamplFactory& sf1 = sfs[ind1].back();
+          SamplFactory& sf2 = sfs[ind2].back();
+          ZSolver<EZ3>::Model* m = m_smt_solver.getModelPtr();
+          if (hasAnyConst[ind2])
+          {
+            curCandidates[ind2] = sf2.gf.replaceConsts(curCandidates[ind2],m);
+            hasAnyConst[ind2] = false;
+          }
+          if (ind2 != ind1 && hasAnyConst[ind1])
+          {
+            curCandidates[ind1] = sf1.gf.replaceConsts(curCandidates[ind1],m);
+            hasAnyConst[ind1] = false;
+          }
+          delete m;
+          return checkCandidates();
+        }
       }
 
-      bool res = false;
+      tribool res = false;
       for (auto &cand : curCandidates) res = !isOpX<TRUE>(cand);
+      if (!res && gotindeterminate)
+        return indeterminate;
+      else
+        return res;
+    }
+
+    tribool checkCandidatesQVars()
+    {
+      assert(ruleManager.chcs.size() == 3 && sfs.size() == 1 &&
+        "Multiple invariants currently unsupported with ANY_*_CONST");
+      m_smt_solver.reset();
+      ExprVector faArgs, indConjArgs;
+      HornRuleExt *init, *ind;
+      for (auto& hr : ruleManager.chcs)
+      {
+        if (hr.isFact)
+          init = &hr;
+        else if (hr.isInductive)
+          ind = &hr;
+      }
+      ExprUSet vars;
+      for (const Expr& var : ind->srcVars)
+        vars.insert(bind::fname(var));
+      for (const Expr& var : ind->dstVars)
+        vars.insert(bind::fname(var));
+      for (const Expr& var : ind->locVars)
+        vars.insert(bind::fname(var));
+      for (const Expr& var : init->locVars)
+        vars.insert(bind::fname(var));
+
+      for (const Expr& var : vars)
+        faArgs.push_back(var);
+
+      indConjArgs.push_back(ind->body);
+
+      SamplFactory& sf = sfs[0].back();
+
+      Expr lmApp = sf.getAllLemmas();
+      lmApp = replaceAll(lmApp, invarVarsShort[0], ind->srcVars);
+      indConjArgs.push_back(lmApp);
+
+      // Source relation/candidate
+      Expr cand1 = curCandidates[0];
+      cand1 = replaceAll(cand1, invarVarsShort[0], ind->srcVars);
+      indConjArgs.push_back(cand1);
+
+      // Dest relation/candidate
+      Expr cand2 = curCandidates[0];
+      cand2 = replaceAll(cand2, invarVarsShort[0], ind->dstVars);
+
+      Expr initCheck = mk<IMPL>(init->body, cand2);
+      faArgs.push_back(initCheck);
+      initCheck = mknary<FORALL>(faArgs);
+      m_smt_solver.assertExpr(initCheck);
+      Expr indCheck = mk<IMPL>(conjoin(indConjArgs, m_efac), cand2);
+      faArgs.back() = indCheck;
+      indCheck = mknary<FORALL>(faArgs);
+      m_smt_solver.assertExpr(indCheck);
+
+      tribool res = m_smt_solver.solve();
+      numOfSMTChecks++;
+
+      if (res)
+      {
+        ZSolver<EZ3>::Model* m = m_smt_solver.getModelPtr();
+        if (hasAnyConst[0])
+        {
+          curCandidates[0] = sf.gf.replaceConsts(curCandidates[0],m);
+          curCandidates[0] = simplifyBool(simplifyArithm(curCandidates[0]));
+          hasAnyConst[0] = false;
+          if (isOpX<TRUE>(curCandidates[0]) || isOpX<FALSE>(curCandidates[0]))
+            res = false;
+          else if (isTautology(curCandidates[0]))
+            res = false;
+          else if (u.isFalse(curCandidates[0]))
+            res = false;
+          // Sometimes we approve a candidate which then doesn't pass
+          // the normal checks.
+          // TODO: Figure out why.
+          if (res)
+            return checkCandidates();
+          else
+            return res;
+        }
+        delete m;
+      }
       return res;
     }
 
@@ -299,7 +459,7 @@ namespace ufo
         if (oneInductiveProof) // can complete the invariant only when the proof is 1-inductive
         {
           curCandidates[0] = bnd.getInv();
-          bool addedRemainingLemma = checkCandidates() && checkSafety();
+          bool addedRemainingLemma = bool(checkCandidates()) && checkSafety();
           if (addedRemainingLemma) sf.learnedExprs.insert(curCandidates[0]); // for serialization only
 
           if (printLog) outs () << "remaining lemma(s): " << *curCandidates[0] <<
@@ -720,6 +880,7 @@ namespace ufo
       int iter = 1;
 
       noStrenCands.resize(invNumber);
+      hasAnyConst.resize(invNumber);
 
       for (int i = 0; i < maxAttempts; i++)
       {
@@ -757,25 +918,47 @@ namespace ufo
 
           noStrenCands[j] = getStrenOrWeak(cand, j, strenOrWeak & 1);
           curCandidates[j] = getStrenOrWeak(noStrenCands[j], j, strenOrWeak & 2);
+          hasAnyConst[j] = sf.gf.lastHasAnyConst();
         }
 
         if (alldone) break;
 
         if (skip) continue;
 
-        if (printLog)
+        // check all the candidates at once for all CHCs :
+
+        tribool isInductive;
+        bool hasAnyConst = false;
+        for (const auto& sf : sfs)
+          hasAnyConst |= sf.back().gf.lastHasAnyConst();
+        if (hasAnyConst)
         {
-          outs() << "\n  ---- iteration " << iter <<  " ----\n";
-          for (int j = 0; j < invNumber; j++)
-            outs () << "candidate for " << *decls[j] << ": " << *curCandidates[j] << "\n";
+          isInductive = checkCandidatesQVars();
+          if (printLog)
+          {
+            outs() << "\n  ---- iteration " << iter <<  " ----\n";
+            for (int j = 0; j < invNumber; j++)
+              outs () << "candidate for " << *decls[j] << ": " << *curCandidates[j] << "\n";
+          }
+          if (!isInductive || indeterminate(isInductive))
+            curCandidates[0] = mk<TRUE>(m_efac);
+        }
+        else
+        {
+          if (printLog)
+          {
+            outs() << "\n  ---- iteration " << iter <<  " ----\n";
+            for (int j = 0; j < invNumber; j++)
+              outs () << "candidate for " << *decls[j] << ": " << *curCandidates[j] << "\n";
+          }
+          isInductive = checkCandidates();
         }
 
         iter++;
 
-        // check all the candidates at once for all CHCs :
-
-        int isInductive = checkCandidates();
         if (isInductive) success = checkSafety();       // query is checked here
+        for (auto& sf : sfs)
+          sf.back().gf.markSolverResult(isInductive);
 
         reportCheckingResults();
         if (success) break;
@@ -877,7 +1060,8 @@ namespace ufo
         }
         m_smt_solver.assertExpr(mk<NEG>(cand2));
 
-        bool safe = bool(!m_smt_solver.solve());
+        tribool res = m_smt_solver.solve();
+        bool safe = bool(!res);
         if (!safe)
           errs() << "ERROR: Invariant(s) failed sanity check" << endl;
         assert(safe);
@@ -1032,9 +1216,9 @@ namespace ufo
         assert(invNum >= 0 && invNum < invNumber);
         curCandidates[invNum] = lemmas->arg(i)->right();
       }
-      bool isInd = checkCandidates();
+      tribool isInd = checkCandidates();
 
-      if (!isInd)
+      if (!isInd || indeterminate(isInd))
       {
         outs() << "WARNING: Lemma file is not inductive. Ignoring.\n";
         for (int i = 0; i < lemmas->arity(); ++i)

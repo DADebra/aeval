@@ -8,6 +8,8 @@
 namespace ufo
 {
 
+typedef unordered_map<Expr,unordered_set<Expr>> UniqVarMap;
+
 class Traversal
 {
   public:
@@ -28,11 +30,16 @@ class Traversal
   virtual ParseTree GetCurrCand() = 0;
 
   // Returns the set of unique variables that appear in the current candidate.
-  virtual const ExprUSet& GetCurrUniqueVars() = 0;
+  // Key: Variable (added with 'Grammar::addUniqueVar')
+  // Value: Set of unique FAPPS that Key expands to.
+  virtual const UniqVarMap& GetCurrUniqueVars() = 0;
 
   // Increments the position of this traversal, returning the next candidate
   // (i.e. the candidate at the new position).
   virtual ParseTree Increment() = 0;
+
+  // Restart the traversal, so that it starts from the first candidate again.
+  virtual void Restart() = 0;
 };
 
 }
