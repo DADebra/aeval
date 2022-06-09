@@ -293,6 +293,17 @@ namespace ufo
         return res;
     }
 
+    struct exprvardeclless
+    {
+      bool operator()(const Expr& l, const Expr& r) const
+      {
+        assert(isOpX<FDECL>(l) && isOpX<FDECL>(r));
+        const string& lstr = getTerm<string>(l->left());
+        const string& rstr = getTerm<string>(r->left());
+        return lstr < rstr;
+      }
+    };
+
     tribool checkCandidatesQVars()
     {
       assert(ruleManager.chcs.size() == 3 && sfs.size() == 1 &&
@@ -307,7 +318,7 @@ namespace ufo
         else if (hr.isInductive)
           ind = &hr;
       }
-      ExprUSet vars;
+      set<Expr,exprvardeclless> vars;
       for (const Expr& var : ind->srcVars)
         vars.insert(bind::fname(var));
       for (const Expr& var : ind->dstVars)
@@ -338,14 +349,11 @@ namespace ufo
       cand2 = replaceAll(cand2, invarVarsShort[0], ind->dstVars);
 
       Expr initCheck = mk<IMPL>(init->body, cand2);
-      faArgs.push_back(initCheck);
-      initCheck = mknary<FORALL>(faArgs);
-      m_smt_solver.assertExpr(initCheck);
       Expr indCheck = mk<IMPL>(conjoin(indConjArgs, m_efac), cand2);
-      faArgs.back() = indCheck;
-      indCheck = mknary<FORALL>(faArgs);
-      m_smt_solver.assertExpr(indCheck);
 
+      faArgs.push_back(mk<AND>(initCheck, indCheck));
+      Expr conjCheck = mknary<FORALL>(faArgs);
+      m_smt_solver.assertExpr(conjCheck);
       tribool res = m_smt_solver.solve();
       numOfSMTChecks++;
 

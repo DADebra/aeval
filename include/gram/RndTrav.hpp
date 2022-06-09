@@ -27,7 +27,6 @@ class RndTrav : public Traversal
 
   UniqVarMap uniqvars; // Per-candidate
   mpz_class uniqvarnum = -1; // Per-candidate
-  ExprUMap uniqvardecls; // K: Sort, V: FDECL
 
   default_random_engine randgenerator;
   // K: NT, V: Distribution of priorities, same order as prods[NT]
@@ -76,7 +75,7 @@ class RndTrav : public Traversal
       return ParseTree(root);
     else if (gram.isUniqueVar(root))
     {
-      Expr uniqvar = mk<FAPP>(uniqvardecls.at(root),
+      Expr uniqvar = mk<FAPP>(CFGUtils::uniqueVarDecl(typeOf(root)),
         mkTerm(++uniqvarnum, efac));
       uniqvars[root].insert(uniqvar);
       return ParseTree(uniqvar);
@@ -187,9 +186,6 @@ class RndTrav : public Traversal
     bool ret = gram.addModListener(mlp);
     assert(ret);
     regendistmap();
-    for (const Expr& uniqvar : gram.uniqueVars)
-      uniqvardecls[uniqvar] = mk<FDECL>(
-        mkTerm(string("Unique-Var"), efac), mk<INT_TY>(efac), typeOf(uniqvar));
     Increment();
   }
 

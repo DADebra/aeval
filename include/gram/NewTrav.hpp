@@ -47,7 +47,6 @@ class NewTrav : public Traversal
   ExprFactory& efac;
 
   UniqVarMap uniqvars; // Per-candidate
-  ExprUMap uniqvardecls; // K: Sort, V: FDECL
   unordered_map<size_t, mpz_class> uniqvarnums; // Nicer unique numbers
   mpz_class lastuniqvarnum = -1;
 
@@ -111,7 +110,8 @@ class NewTrav : public Traversal
 #endif
       auto itr = uniqvarnums.find(phash);
       assert(itr != uniqvarnums.end());
-      Expr uniqvar = mk<FAPP>(uniqvardecls.at(root), mkTerm(itr->second, efac));
+      Expr uniqvar = mk<FAPP>(CFGUtils::uniqueVarDecl(typeOf(root)),
+        mkTerm(itr->second, efac));
       return ParseTree(root, uniqvar, false);
     }
 
@@ -363,7 +363,8 @@ class NewTrav : public Traversal
       auto itr = uniqvarnums.find(phash);
       if (itr == uniqvarnums.end())
         itr = uniqvarnums.emplace(phash, ++lastuniqvarnum).first;
-      Expr uniqvar = mk<FAPP>(uniqvardecls.at(root), mkTerm(itr->second, efac));
+      Expr uniqvar = mk<FAPP>(CFGUtils::uniqueVarDecl(typeOf(root)),
+        mkTerm(itr->second, efac));
       travpos.makedone();
       return ParseTree(root, uniqvar, false);
     }
@@ -853,7 +854,7 @@ class NewTrav : public Traversal
 
   void fillUniqVars(const ParseTree& pt)
   {
-    if (uniqvardecls.count(pt.data()) != 0)
+    if (gram.isUniqueVar(pt.data()) != 0)
     {
       bool isnewvar=uniqvars[pt.data()].insert(pt.children()[0].data()).second;
       assert(isnewvar);
@@ -894,12 +895,6 @@ class NewTrav : public Traversal
     mlp.reset(new ModListener([&] (ModClass cl, ModType ty) { return onGramMod(cl, ty); }));
     bool ret = gram.addModListener(mlp);
     assert(ret);
-
-    for (const Expr& uniqvar : gram.uniqueVars)
-    {
-      uniqvardecls[uniqvar] = mk<FDECL>(
-        mkTerm(string("Unique-Var"), efac), mk<INT_TY>(efac), typeOf(uniqvar));
-    }
   }
 
   virtual ~NewTrav()

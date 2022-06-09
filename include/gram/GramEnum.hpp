@@ -372,8 +372,7 @@ class GramEnum
         usingStaticConsts = true;
         restartConstTrav(getConstsOrder(), true);
       }
-      else
-      //if (!enumeratingConsts)
+      else if (!enumeratingConsts)
       {
         if (GetCurrUniqueVars().size() == 0)
           return; // Nothing further to enumerate for this candidate
