@@ -108,6 +108,7 @@ int main (int argc, char ** argv)
   const char *OPT_DEBUG = "--debug";
   const char *OPT_PRINT_SYGUS = "--print-sygus";
   const char *OPT_GEN_GRAMMAR = "--gen-grammar";
+  const char *OPT_ALTERN_VER = "--altern-ver";
 
   if (getBoolValue(OPT_HELP, false, argc, argv) || argc == 1){
     outs () <<
@@ -172,7 +173,8 @@ int main (int argc, char ** argv)
         " " << OPT_D3 << "                    datalearn phase lemmas\n" <<
         " " << OPT_D4 << "                     strengthen MBP with abduction\n" <<
         " " << OPT_D5 << "                           direction of phase discovery (0: backward, 1: forward (default), 2: both)\n" <<
-        " " << OPT_D6 << "                         do not consider duplicates of data candidates (needs \"" << OPT_DATA_LEARNING <<"\")\n";
+        " " << OPT_D6 << "                         do not consider duplicates of data candidates (needs \"" << OPT_DATA_LEARNING <<"\")\n" <<
+        " " << OPT_ALTERN_VER << "                 select version of property-generalization algorithm [0-4]\n";
 
     return 0;
   }
@@ -220,6 +222,7 @@ int main (int argc, char ** argv)
   bool do_boot = !getBoolValue(OPT_NO_BOOT, false, argc, argv);
   bool printSygus = getBoolValue(OPT_PRINT_SYGUS, false, argc, argv);
   bool gengram = getBoolValue(OPT_GEN_GRAMMAR, false, argc, argv);
+  int alternver = getIntValue(OPT_ALTERN_VER, -1, argc, argv);
 
   if (printSygus || gengram)
   {
@@ -279,7 +282,7 @@ int main (int argc, char ** argv)
     ret = learnInvariants3(string(argv[argc-1]), max_attempts, to, densecode, aggressivepruning,
                      do_dl, do_mu, do_elim, do_arithm, do_disj, do_prop, mbp_eqs,
                      d_m, d_p, d_d, d_s, d_f, d_r, d_g, d_se, d_ser, debug, do_boot, templ, saveLemmas,
-                     gramfile, gramparams, b4simpl);
+                     gramfile, gramparams, b4simpl, alternver);
   else if (vers2) // run the TACAS'18 algorithm
     ret = learnInvariants2(string(argv[argc-1]), to, max_attempts,
                   itp, batch, retry, densecode, aggressivepruning, debug, do_boot, templ, saveLemmas,

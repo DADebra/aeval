@@ -55,6 +55,7 @@ namespace ufo
     bool dGenerous;
     int dFwd;
     int mbpEqs;
+    int alternver;
 
     map<int, Expr> postconds;
     map<int, Expr> ssas;
@@ -71,11 +72,11 @@ namespace ufo
 
     RndLearnerV3 (ExprFactory &efac, EZ3 &z3, CHCs& r, unsigned to, bool freqs, bool aggp,
                   int _mu, int _da, bool _d, int _m, bool _dAllMbp, bool _dAddProp,
-                  bool _dAddDat, bool _dStrenMbp, int _dFwd, bool _dR, bool _dG, int _to, int debug, string fileName, string gramfile, int sw, bool sl) :
+                  bool _dAddDat, bool _dStrenMbp, int _dFwd, bool _dR, bool _dG, int _to, int debug, string fileName, string gramfile, int sw, bool sl, int _aver) :
       RndLearnerV2 (efac, z3, r, to, freqs, aggp, debug, fileName, gramfile, sw, sl),
                   mut(_mu), dat(_da), dDisj(_d), mbpEqs(_m), dAllMbp(_dAllMbp),
                   dAddProp(_dAddProp), dAddDat(_dAddDat), dStrenMbp(_dStrenMbp),
-                  dFwd(_dFwd), dRecycleCands(_dR), dGenerous(_dG), to(_to) {}
+                  dFwd(_dFwd), dRecycleCands(_dR), dGenerous(_dG), to(_to), alternver(_aver) {}
 
     bool checkInit(Expr rel)
     {
@@ -1557,24 +1558,353 @@ namespace ufo
       if (printLog >= 2 && !printedAny) outs () << "  none\n";
     }
 
-    bool bootstrap()
+    int hasRange(Expr e)
     {
-      if (printLog) outs () << "\nBOOTSTRAPPING\n=============\n";
-      filterUnsat();
-
-      if (multiHoudini(ruleManager.dwtoCHCs))
+      assert(isOpX<AND>(e->last()));
+      assert(e->arity() == 2);
+      Expr qvar = e->left();
+      int rangecount = 0;
+      for (int i = 0; i < e->last()->arity(); ++i)
       {
-        assignPrioritiesForLearned();
-        if (checkAllLemmas())
+        Expr arg = e->last()->arg(i);
+        if (isOp<ComparissonOp>(arg) && (arg->left() == qvar || arg->right() == qvar))
+          rangecount++;
+      }
+      return rangecount;
+    }
+
+    // Output: K: Array, V: Max of range
+    ExprUMap getRanges(Expr fullpost, Expr qvar)
+    {
+      // TODO: Generate lower end of range
+
+      ExprUMap out;
+
+      // Find the array the range is using
+      ExprVector range_arrs;
+      filter(fullpost, [&] (Expr e) { return isOpX<SELECT>(e) && e->last() == qvar; }, inserter(range_arrs, range_arrs.begin()));
+      if (range_arrs.size() == 0)
+      {
+        outs() << "Bootstrap: Couldn't find array accessed by " << qvar << endl;
+        return out;
+      }
+
+      // Fix up range_arrs to be just the arrays
+      for (Expr& e : range_arrs) e = e->first();
+
+      // Find the highest point the array has been written to (for progress)
+      vector<ExprSet> alliters(range_arrs.size(), ExprSet());
+      Expr loopbody;
+      for (int i = 0; i < range_arrs.size(); ++i)
+        for (auto& chc : ruleManager.chcs)
         {
-          outs () << "Success after bootstrapping\n";
-          printSolution();
-          return true;
+          if (!chc.isInductive)
+            continue;
+          loopbody = chc.body;
+          filter(chc.body, [&] (Expr e) {
+              return (isOpX<SELECT>(e) || isOpX<STORE>(e)) &&
+              isSameArray(e->left(), range_arrs[i]); },
+            inserter(alliters[i], alliters[i].begin()));
+          /*Expr maxind = (*indices.begin())->right();
+          for (const Expr &ind : indices)
+          {
+            if (u.implies(chc.body, mk<GEQ>(ind->right(), maxind)))
+              maxind = ind->right();
+          }
+          iters[i] = maxind;*/
+        }
+      ExprVector iters(alliters.size(), NULL); // The maximal iters
+      for (int i = 0; i < alliters.size(); ++i)
+      {
+        if (alliters[i].size() == 0) continue;
+        Expr maxind = (*alliters[i].begin())->right();
+        for (const Expr& ind : alliters[i])
+        {
+          // We have to check one-by-one since the max might change
+          candidates[0].clear();
+          candidates[0].push_back(mk<GEQ>(ind->right(), maxind));
+          if (u.isTrue(candidates[0].back()))
+            maxind = ind->right();
+          else if (multiHoudini(ruleManager.dwtoCHCs))
+            maxind = ind->right();
+        }
+        candidates[0].clear();
+        ExprVector indvars;
+        filter(maxind, isOpX<FAPP,Expr>, inserter(indvars, indvars.begin()));
+        ExprVector inddiffs;
+        for (const Expr& ind : indvars)
+        {
+          Expr indvarPrime = replaceAll(ind, invarVarsShort[0], ruleManager.invVarsPrime[decls[0]]);
+          // Probably not necessary
+          Expr tmpvar = mkConst(mkTerm<string>("tmpqevar", m_efac), typeOf(indvarPrime));
+          ExprVector _qvars{indvarPrime};
+          /*Expr indvarPrimeDef = ufo::eliminateQuantifiers(
+            mk<AND>(loopbody, mk<NEQ>(range_arrs[i], replaceAll(range_arrs[i], invarVarsShort[0], ruleManager.invVarsPrime[decls[0]])), mk<EQ>(tmpvar, indvarPrime)),
+            _qvars);*/
+          Expr indvarPrimeDef = ufo::eliminateQuantifiers(
+            mk<AND>(loopbody, mk<NEQ>(ind, indvarPrime), mk<EQ>(tmpvar, indvarPrime)),
+            _qvars);
+          // Assumes eliminateQuantifiers keeps the structure the same
+          indvarPrimeDef = indvarPrimeDef->last()->right();
+          Expr inddiff = mk<MINUS>(indvarPrimeDef, ind);
+          maxind = replaceAll(maxind, ind, mk<MINUS>(ind, inddiff));
+          inddiffs.push_back(inddiff);
+        }
+        inddiffs.push_back(maxind);
+        iters[i] = simplifyArithm(simplifyArithm(mknary<PLUS>(inddiffs)));
+      }
+
+      for (int i = 0; i < range_arrs.size(); ++i)
+        out[range_arrs[i]] = iters[i];
+
+      return out;
+    }
+
+    // For 'mutateAERanges'
+    Expr getSingleRange(Expr fullpost, Expr qvar)
+    {
+      ExprUMap out = getRanges(fullpost, qvar);
+      ExprSet iters_set;
+      for (auto &kv : out)
+        iters_set.insert(kv.second);
+
+      if (iters_set.size() > 1)
+      {
+        outs() << "Bootstrap: Multiple array accesses for same quantified variable currently unimplemented" << endl;
+        return NULL;
+      }
+      else if (iters_set.size() == 1)
+        return *iters_set.begin();
+
+      outs() << "Bootstrap: Unable to find range for " << qvar << endl;
+      return NULL;
+    }
+
+    Expr mutateAERanges(Expr fullpost, Expr post, ExprUMap& qvars,
+      unordered_map<Expr,int>& hasrange)
+    {
+      ExprVector newargs;
+      if (isLit(post) || isOpX<FDECL>(post))
+        return post;
+
+      for (int i = 0; i < post->arity(); ++i)
+        newargs.push_back(NULL);
+
+      if (isOpX<FORALL>(post) || isOpX<EXISTS>(post))
+      {
+        for (int i = 0; i < post->arity() - 1; ++i)
+          qvars[mk<FAPP>(post->arg(i))] = post;
+        newargs.back() = mutateAERanges(fullpost, post->last(), qvars, hasrange);
+      }
+      else if (isOp<ComparissonOp>(post))
+      {
+        // Annoying simplification of comparisons
+        if (isOpX<PLUS>(post->left()) &&
+        isOpX<MPZ>(post->right()) && getTerm<mpz_class>(post->right()) == 0)
+          post = mk(post->op(), post->left()->left(), post->left()->right()->left());
+        else if (isOpX<PLUS>(post->right()) &&
+        isOpX<MPZ>(post->left()) && getTerm<mpz_class>(post->left()) == 0)
+          post = mk(post->op(), post->right()->left(), post->right()->right()->left());
+        // TODO: Better definition of ranges, detect 2 lower ranges?
+        if (qvars.count(post->left()) && (isOpX<FAPP>(post->right()) || isLit(post->right())))
+        {
+          if (!isLit(post->right()) && !isOpX<EXISTS>(qvars[post->left()]))
+            newargs[1] = getSingleRange(fullpost, post->left());
+          hasrange[post->left()] += 1;
+        }
+        else if (qvars.count(post->right()) && (isOpX<FAPP>(post->left()) || isLit(post->left())))
+        {
+          if (!isLit(post->left()) && !isOpX<EXISTS>(qvars[post->right()]))
+            newargs[0] = getSingleRange(fullpost, post->right());
+          hasrange[post->right()] += 1;
         }
       }
 
-      if (!dDisj) simplifyLemmas();
+      for (int i = 0; i < post->arity(); ++i)
+        if (!newargs[i])
+          newargs[i] = mutateAERanges(fullpost, post->arg(i), qvars, hasrange);
+
+      return mknary(post->op(), newargs.begin(), newargs.end());
+    }
+
+    std::pair<Expr,Expr> coverWithRange(Expr e, const ExprUMap& ranges,
+      Expr qvar)
+    {
+      if (isLit(e) || isOpX<FDECL>(e))
+        return make_pair(e, Expr(NULL));
+
+      if (isOpX<SELECT>(e) && e->right() == qvar)
+        return make_pair(e, e->left());
+
+      ExprVector newargs;
+      Expr foundsel = NULL;
+      for (int i = 0; i < e->arity(); ++i)
+      {
+        auto argret = coverWithRange(e->arg(i), ranges, qvar);
+        if (!argret.first)
+            return make_pair(Expr(NULL), Expr(NULL));
+        if (argret.second)
+        {
+          if (foundsel && ranges.at(foundsel) != ranges.at(argret.second))
+          {
+            outs() << "Bootstrap: Can't synthesize range for multi-array comparison" << endl;
+            return make_pair(Expr(NULL), Expr(NULL));
+          }
+          else
+            foundsel = argret.second;
+        }
+        newargs.push_back(argret.first);
+      }
+
+      Expr ret = mknary(e->op(), newargs.begin(), newargs.end());
+      if (isOpX<BOOL_TY>(typeOf(e)) && foundsel)
+      {
+        ret = mk<AND>(
+          mk<GEQ>(qvar, mkMPZ(0, qvar->efac())), // Lower bound (TODO: Static)
+          mk<LT>(qvar, ranges.at(foundsel)), // Upper bound
+          ret
+        );
+
+        // NULL because we already applied range
+        return make_pair(ret, Expr(NULL));
+      }
+      return make_pair(ret, foundsel);
+    }
+
+    Expr synthAERange(Expr fullpost, Expr post, Expr qvar)
+    {
+      ExprVector newargs;
+      if (isLit(post) || isOpX<FDECL>(post))
+        return post;
+
+      for (int i = 0; i < post->arity(); ++i)
+        newargs.push_back(NULL);
+
+      if ((isOpX<EXISTS>(post) || isOpX<FORALL>(post)) && post->first() == qvar->first())
+      {
+        newargs.back() = coverWithRange(post->last(),
+          getRanges(fullpost, qvar), qvar).first;
+      }
+
+      for (int i = 0; i < post->arity(); ++i)
+        if (!newargs[i])
+          newargs[i] = synthAERange(fullpost, post->arg(i), qvar);
+
+      return mknary(post->op(), newargs.begin(), newargs.end());
+    }
+
+    Expr generalizeArrQuery()
+    {
+      if (ruleManager.decls.size() > 1)
+      {
+        if (printLog) outs() << "Bootstrap: More than one invariant currently unsupported";
+        return NULL;
+      }
+
+      Expr newpost = NULL;
+      ExprVector loopbodies;
+      const ExprVector *locvars = NULL;
+      // Find query body and loops
+      for (const auto& chc : ruleManager.chcs)
+        if (chc.isQuery)
+        {
+          newpost = chc.body;
+          locvars = &chc.locVars;
+        }
+        else if (chc.isInductive)
+          loopbodies.push_back(chc.body);
+      if (isOpX<AND>(newpost))
+      {
+        // Strip loop condition
+        ExprVector newpost_newargs;
+        for (int i = 0; i < newpost->arity(); ++i)
+          for (const Expr& body : loopbodies)
+          {
+            bool shoulddiscard = false;
+            if (isOpX<AND>(body))
+            {
+              for (int j = 0; j < body->arity(); ++j)
+                if (u.isEquiv(mkNeg(newpost->arg(i)), body->arg(j)))
+                  shoulddiscard = true;
+            }
+            else if (u.isEquiv(mkNeg(newpost->arg(i)), body))
+              shoulddiscard = true;
+            if (!shoulddiscard)
+              newpost_newargs.push_back(newpost->arg(i));
+          }
+        newpost = conjoin(newpost_newargs, m_efac);
+      }
+
+      if (locvars)
+        newpost = getExists(newpost, *locvars);
+
+      newpost = mkNeg(newpost);
+
+      if (alternver != -1 && alternver < 2)
+        return newpost;
+
+      // Rewrite ranges
+      ExprUMap qvars;
+      unordered_map<Expr,int> hasrange;
+      newpost = mutateAERanges(newpost, newpost, qvars, hasrange);
+
+      if (alternver != -1 && alternver < 3)
+        return newpost;
+
+      for (auto& kv : qvars)
+        if (hasrange[kv.first] < 2)
+          newpost = synthAERange(newpost, newpost, kv.first);
+
+      return newpost;
+    }
+
+    bool bootstrap()
+    {
+      if (printLog) outs () << "\nBOOTSTRAPPING\n=============\n";
+      if (alternver != 0)
+      {
+        filterUnsat();
+
+        if (multiHoudini(ruleManager.dwtoCHCs))
+        {
+          assignPrioritiesForLearned();
+          if (checkAllLemmas())
+          {
+            outs () << "Success after bootstrapping\n";
+            printSolution();
+            return true;
+          }
+        }
+
+        if (!dDisj) simplifyLemmas();
+      }
       boot = false;
+
+      Expr newpost = generalizeArrQuery();
+      // Check
+      if (newpost)
+      {
+        if (printLog)
+          outs () << "- - - Bootstrapped cand for " << decls[0] << ": "
+                  << newpost << (printLog >= 3 ? " 😎\n" : "\n");
+        candidates[0].clear();
+        candidates[0].push_back(newpost);
+        if (multiHoudini(ruleManager.dwtoCHCs))
+        {
+          assignPrioritiesForLearned();
+          if (checkAllLemmas())
+          {
+            outs () << "Success after bootstrapping\n";
+            printSolution();
+            return true;
+          }
+        }
+      }
+      else
+        deferredCandidates[0].push_back(newpost);
+
+      if (alternver >= 0)
+        return false;
 
       // try array candidates one-by-one (adapted from `synthesize`)
       for (auto & dcl: ruleManager.wtoDecls)
@@ -2074,7 +2404,7 @@ namespace ufo
   inline bool learnInvariants3(string smt, unsigned maxAttempts, unsigned to,
        bool freqs, bool aggp, int dat, int mut, bool doElim, bool doArithm,
        bool doDisj, int doProp, int mbpEqs, bool dAllMbp, bool dAddProp, bool dAddDat,
-       bool dStrenMbp, int dFwd, bool dRec, bool dGenerous, bool dSee, bool ser, int debug, bool dBoot, int sw, bool sl, string gramfile, TravParams gramps, bool b4simpl)
+       bool dStrenMbp, int dFwd, bool dRec, bool dGenerous, bool dSee, bool ser, int debug, bool dBoot, int sw, bool sl, string gramfile, TravParams gramps, bool b4simpl, int alternver)
   {
     ExprFactory m_efac;
     EZ3 z3(m_efac);
@@ -2101,7 +2431,7 @@ namespace ufo
 
     RndLearnerV3 ds(m_efac, z3, ruleManager, to, freqs, aggp, mut, dat,
                     doDisj, mbpEqs, dAllMbp, dAddProp, dAddDat, dStrenMbp,
-                    dFwd, dRec, dGenerous, to, debug, smt, gramfile, sw, sl);
+                    dFwd, dRec, dGenerous, to, debug, smt, gramfile, sw, sl, alternver);
     ds.boot = dBoot;
 
     map<Expr, ExprSet> cands;

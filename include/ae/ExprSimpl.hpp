@@ -4616,6 +4616,20 @@ namespace ufo
     return dagVisit(sortrw, e);
   }
 
+  // Considers nested store operations
+  bool isSameArray(Expr a1, Expr a2)
+  {
+    if (a1 == a2)
+      return true;
+    if (isOpX<STORE>(a1) && isOpX<STORE>(a2))
+      return isSameArray(a1->left(), a2->left());
+    if (isOpX<STORE>(a1))
+      return isSameArray(a1->left(), a2);
+    if (isOpX<STORE>(a2))
+      return isSameArray(a1, a2->left());
+    return false;
+  }
+
   void pprint(Expr exp, int inden, bool upper);
 
   template<typename Range> static void pprint(Range& exprs, int inden = 0)
