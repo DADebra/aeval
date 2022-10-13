@@ -1592,7 +1592,7 @@ namespace ufo
       // Fix up range_arrs to be just the arrays
       for (Expr& e : range_arrs) e = e->first();
 
-      // Find the highest point the array has been written to (for progress)
+      // Find all points the array has been written to (for progress)
       vector<ExprSet> alliters(range_arrs.size(), ExprSet());
       Expr loopbody;
       for (int i = 0; i < range_arrs.size(); ++i)
@@ -1613,6 +1613,22 @@ namespace ufo
           }
           iters[i] = maxind;*/
         }
+
+      if (alternver < 4)
+      {
+        for (int i = 0; i < alliters.size(); ++i)
+        {
+          if (alliters[i].size() > 1)
+          {
+            cout << "Bootstrap: altern-ver = 3 doesn't support multi-index accesses" << endl;
+            out[range_arrs[i]] = NULL;
+          }
+          else
+            out[range_arrs[i]] = (*alliters[i].begin())->right();
+        }
+        return out;
+      }
+
       ExprVector iters(alliters.size(), NULL); // The maximal iters
       for (int i = 0; i < alliters.size(); ++i)
       {
@@ -1644,6 +1660,11 @@ namespace ufo
           Expr indvarPrimeDef = ufo::eliminateQuantifiers(
             mk<AND>(loopbody, mk<NEQ>(ind, indvarPrime), mk<EQ>(tmpvar, indvarPrime)),
             _qvars);
+          if (isOpX<FALSE>(indvarPrimeDef))
+          {
+            cout << "Bootstrap: Unable to find definition for " << indvarPrime << endl;
+            continue;
+          }
           // Assumes eliminateQuantifiers keeps the structure the same
           indvarPrimeDef = indvarPrimeDef->last()->right();
           Expr inddiff = mk<MINUS>(indvarPrimeDef, ind);
@@ -1759,11 +1780,14 @@ namespace ufo
       Expr ret = mknary(e->op(), newargs.begin(), newargs.end());
       if (isOpX<BOOL_TY>(typeOf(e)) && foundsel)
       {
-        ret = mk<AND>(
-          mk<GEQ>(qvar, mkMPZ(0, qvar->efac())), // Lower bound (TODO: Static)
-          mk<LT>(qvar, ranges.at(foundsel)), // Upper bound
-          ret
-        );
+        if (ranges.at(foundsel))
+          ret = mk<AND>(
+            // Lower bound (TODO: Static)
+            mk<GEQ>(qvar, mkMPZ(0, qvar->efac())),
+            // Upper bound
+            mk<LT>(qvar, ranges.at(foundsel)),
+            ret
+          );
 
         // NULL because we already applied range
         return make_pair(ret, Expr(NULL));
