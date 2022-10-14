@@ -1573,11 +1573,9 @@ namespace ufo
       return rangecount;
     }
 
-    // Output: K: Array, V: Max of range
+    // Output: K: Array, V: Full new range
     ExprUMap getRanges(Expr fullpost, Expr qvar)
     {
-      // TODO: Generate lower end of range
-
       ExprUMap out;
 
       // Find the array the range is using
@@ -1592,91 +1590,192 @@ namespace ufo
       // Fix up range_arrs to be just the arrays
       for (Expr& e : range_arrs) e = e->first();
 
-      // Find all points the array has been written to (for progress)
-      vector<ExprSet> alliters(range_arrs.size(), ExprSet());
-      Expr loopbody;
-      for (int i = 0; i < range_arrs.size(); ++i)
-        for (auto& chc : ruleManager.chcs)
-        {
-          if (!chc.isInductive)
-            continue;
+      Expr loopbody, initbody;
+      for (const auto& chc : ruleManager.chcs)
+      {
+        if (chc.isInductive)
           loopbody = chc.body;
-          filter(chc.body, [&] (Expr e) {
-              return (isOpX<SELECT>(e) || isOpX<STORE>(e)) &&
-              isSameArray(e->left(), range_arrs[i]); },
-            inserter(alliters[i], alliters[i].begin()));
-          /*Expr maxind = (*indices.begin())->right();
-          for (const Expr &ind : indices)
-          {
-            if (u.implies(chc.body, mk<GEQ>(ind->right(), maxind)))
-              maxind = ind->right();
-          }
-          iters[i] = maxind;*/
-        }
+        else if (chc.isFact)
+          initbody = replaceAll(chc.body, chc.dstVars, invarVarsShort[0]);
+      }
 
       if (alternver < 4)
       {
+        vector<ExprSet> alliters(range_arrs.size(), ExprSet());
+        for (int i = 0; i < range_arrs.size(); ++i)
+          filter(loopbody, [&] (Expr e) {
+              return (isOpX<SELECT>(e) || isOpX<STORE>(e)) &&
+              isSameArray(e->left(), range_arrs[i]); },
+            inserter(alliters[i], alliters[i].begin()));
+
         for (int i = 0; i < alliters.size(); ++i)
         {
           if (alliters[i].size() > 1)
           {
-            cout << "Bootstrap: altern-ver = 3 doesn't support multi-index accesses" << endl;
+            cout << "Bootstrap: altern-ver < 4 doesn't support multi-index accesses" << endl;
             out[range_arrs[i]] = NULL;
+            continue;
           }
-          else
-            out[range_arrs[i]] = (*alliters[i].begin())->right();
+          Expr iter = (*alliters[i].begin())->right();
+          Expr boundhi = iter, boundlo = iter;
+          // Still need to find the minimum
+          ExprVector itervars;
+          ExprUSet allunprimed(invarVarsShort[0].begin(),
+              invarVarsShort[0].end());
+          filter(iter, [&](Expr e){return allunprimed.count(e) != 0;},
+              inserter(itervars, itervars.begin()));
+          if (itervars.size() > 1)
+          {
+            cout << "Bootstrap: altern-ver < 4 doesn't support multi-var indices" << endl;
+            out[range_arrs[i]] = NULL;
+            continue;
+          }
+          Expr var = itervars[0];
+          ExprVector _qvars{var};
+          Expr tmpvar = mkConst(mkTerm<string>("tmpqevar", m_efac), typeOf(var));
+          Expr varlo_def = ufo::eliminateQuantifiers(
+            mk<AND>(initbody, mk<EQ>(tmpvar, var)),
+            _qvars);
+          if (isOpX<FALSE>(varlo_def))
+          {
+            cout << "Bootstrap: Failed to find definition for "<<var<<endl;
+            return out;
+          }
+          // Assumes eliminateQuantifiers keeps the structure the same
+          if (isOpX<AND>(varlo_def))
+            varlo_def = varlo_def->last();
+          varlo_def = varlo_def->right();
+          boundlo = replaceAll(boundlo, var, varlo_def);
+          boundlo = simplifyArithm(simplifyArithm(boundlo));
+          out[range_arrs[i]] =
+            mk<AND>(mk<GEQ>(qvar, boundlo), mk<LT>(qvar, boundhi));
         }
         return out;
       }
 
-      ExprVector iters(alliters.size(), NULL); // The maximal iters
-      for (int i = 0; i < alliters.size(); ++i)
+
+      ExprVector disjs, vars;
+      u.flatten(loopbody, disjs, false, vars,
+        [](Expr e, ExprVector& v){return e;});
+
+      ExprVector ranges(range_arrs.size(), NULL);
+      for (const auto& loopbody : disjs)
       {
-        if (alliters[i].size() == 0) continue;
-        Expr maxind = (*alliters[i].begin())->right();
-        for (const Expr& ind : alliters[i])
-        {
-          // We have to check one-by-one since the max might change
-          candidates[0].clear();
-          candidates[0].push_back(mk<GEQ>(ind->right(), maxind));
-          if (u.isTrue(candidates[0].back()))
-            maxind = ind->right();
-          else if (multiHoudini(ruleManager.dwtoCHCs))
-            maxind = ind->right();
+        // Find the all points the array has been written to (for progress)
+        vector<ExprSet> alliters(range_arrs.size(), ExprSet());
+        vector<ExprSet> alliters_init(range_arrs.size(), ExprSet());
+        for (int i = 0; i < range_arrs.size(); ++i) {
+          filter(loopbody, [&] (Expr e) {
+              return (isOpX<SELECT>(e) || isOpX<STORE>(e)) &&
+              isSameArray(e->left(), range_arrs[i]); },
+            inserter(alliters[i], alliters[i].begin()));
+          filter(initbody, [&] (Expr e) {
+              return (isOpX<SELECT>(e) || isOpX<STORE>(e)) &&
+              isSameArray(e->left(), range_arrs[i]); },
+            inserter(alliters_init[i], alliters_init[i].begin()));
         }
-        candidates[0].clear();
-        ExprVector indvars;
-        filter(maxind, isOpX<FAPP,Expr>, inserter(indvars, indvars.begin()));
-        ExprVector inddiffs;
-        for (const Expr& ind : indvars)
+
+        ExprUSet allprimed(ruleManager.invVarsPrime[decls[0]].begin(),
+            ruleManager.invVarsPrime[decls[0]].end());
+        ExprUSet allunprimed(invarVarsShort[0].begin(),
+            invarVarsShort[0].end());
+        for (int i = 0; i < alliters.size(); ++i)
         {
-          Expr indvarPrime = replaceAll(ind, invarVarsShort[0], ruleManager.invVarsPrime[decls[0]]);
-          // Probably not necessary
-          Expr tmpvar = mkConst(mkTerm<string>("tmpqevar", m_efac), typeOf(indvarPrime));
-          ExprVector _qvars{indvarPrime};
-          /*Expr indvarPrimeDef = ufo::eliminateQuantifiers(
-            mk<AND>(loopbody, mk<NEQ>(range_arrs[i], replaceAll(range_arrs[i], invarVarsShort[0], ruleManager.invVarsPrime[decls[0]])), mk<EQ>(tmpvar, indvarPrime)),
-            _qvars);*/
-          Expr indvarPrimeDef = ufo::eliminateQuantifiers(
-            mk<AND>(loopbody, mk<NEQ>(ind, indvarPrime), mk<EQ>(tmpvar, indvarPrime)),
-            _qvars);
-          if (isOpX<FALSE>(indvarPrimeDef))
+          if (alliters[i].size() == 0) continue;
+          for (const Expr& iter : alliters[i])
           {
-            cout << "Bootstrap: Unable to find definition for " << indvarPrime << endl;
-            continue;
+            ExprVector varsp;
+            Expr tmpiter = iter->right();
+            do
+            {
+              varsp.clear();
+              filter(tmpiter, [&](Expr e){return allprimed.count(e) != 0;},
+                  inserter(varsp, varsp.begin()));
+              for (const Expr& vp : varsp)
+              {
+                Expr tmpvar = mkConst(mkTerm<string>("tmpqevar", m_efac), typeOf(vp));
+                ExprVector _qvars{vp};
+                Expr def = ufo::eliminateQuantifiers(
+                  mk<AND>(loopbody, mk<EQ>(tmpvar, vp)),
+                  _qvars);
+                if (isOpX<FALSE>(def))
+                {
+                  cout << "Bootstrap: Failed to find definition for "<<vp<<endl;
+                  return out;
+                }
+                if (isOpX<AND>(def))
+                  def = def->last();
+                def = def->right();
+                tmpiter = replaceAll(tmpiter, vp, def);
+              }
+            } while (varsp.size() != 0);
+
+            ExprVector itervars;
+            filter(tmpiter, [&](Expr e){return allunprimed.count(e) != 0;},
+                inserter(itervars, itervars.begin()));
+            Expr boundlo = tmpiter, boundhi = tmpiter;
+            for (const Expr& var : itervars)
+            {
+              Expr varp = replaceAll(var, invarVarsShort[0], ruleManager.invVarsPrime[decls[0]]);
+              Expr tmpvar = mkConst(mkTerm<string>("tmpqevar", m_efac), typeOf(var));
+              ExprVector _qvars{varp};
+              // Get max
+              Expr varp_def = ufo::eliminateQuantifiers(
+                mk<AND>(loopbody, mk<EQ>(tmpvar, varp)),
+                _qvars, false, true, false);
+              if (isOpX<FALSE>(varp_def))
+              {
+                cout<<"Bootstrap: Failed to find definition for "<<varp<<endl;
+                return out;
+              }
+              // Assumes eliminateQuantifiers keeps the structure the same
+              if (isOpX<AND>(varp_def))
+                varp_def = varp_def->last();
+              varp_def = varp_def->right();
+              Expr inddiff = mk<MINUS>(varp_def, var);
+              boundhi = replaceAll(boundhi, var, mk<MINUS>(var, inddiff));
+              boundhi = simplifyArithm(simplifyArithm(boundhi));
+
+              // Get min
+              _qvars[0] = var;
+              Expr varlo_def = ufo::eliminateQuantifiers(
+                mk<AND>(initbody, mk<EQ>(tmpvar, var)),
+                _qvars);
+              if (isOpX<FALSE>(varlo_def))
+              {
+                cout << "Bootstrap: Failed to find definition for "<<var<<endl;
+                return out;
+              }
+              // Assumes eliminateQuantifiers keeps the structure the same
+              if (isOpX<AND>(varlo_def))
+                varlo_def = varlo_def->last();
+              varlo_def = varlo_def->right();
+
+              // We have benchmarks which start with i = 1, so search for
+              // a select/store in Init and use that index if < 
+              Expr min = varlo_def;
+
+              for (const Expr& iter_init : alliters_init[i])
+              {
+                if (u.isTrue(mk<LT>(iter_init->right(), min)))
+                  min = iter_init->right();
+              }
+
+              boundlo = replaceAll(boundlo, var, min);
+              boundlo = simplifyArithm(simplifyArithm(boundlo));
+            }
+            Expr newrange = 
+              mk<AND>(mk<GEQ>(qvar, boundlo), mk<LEQ>(qvar, boundhi));
+            if (ranges[i])
+              ranges[i] = mk<OR>(ranges[i], newrange);
+            else
+              ranges[i] = newrange;
           }
-          // Assumes eliminateQuantifiers keeps the structure the same
-          indvarPrimeDef = indvarPrimeDef->last()->right();
-          Expr inddiff = mk<MINUS>(indvarPrimeDef, ind);
-          maxind = replaceAll(maxind, ind, mk<MINUS>(ind, inddiff));
-          inddiffs.push_back(inddiff);
         }
-        inddiffs.push_back(maxind);
-        iters[i] = simplifyArithm(simplifyArithm(mknary<PLUS>(inddiffs)));
       }
 
       for (int i = 0; i < range_arrs.size(); ++i)
-        out[range_arrs[i]] = iters[i];
+        out[range_arrs[i]] = ranges[i];
 
       return out;
     }
@@ -1702,7 +1801,7 @@ namespace ufo
     }
 
     Expr mutateAERanges(Expr fullpost, Expr post, ExprUMap& qvars,
-      unordered_map<Expr,int>& hasrange)
+      unordered_map<Expr,int>& hasrange, bool negContext)
     {
       ExprVector newargs;
       if (isLit(post) || isOpX<FDECL>(post))
@@ -1715,7 +1814,7 @@ namespace ufo
       {
         for (int i = 0; i < post->arity() - 1; ++i)
           qvars[mk<FAPP>(post->arg(i))] = post;
-        newargs.back() = mutateAERanges(fullpost, post->last(), qvars, hasrange);
+        newargs.back() = mutateAERanges(fullpost, post->last(), qvars, hasrange, false);
       }
       else if (isOp<ComparissonOp>(post))
       {
@@ -1729,21 +1828,45 @@ namespace ufo
         // TODO: Better definition of ranges, detect 2 lower ranges?
         if (qvars.count(post->left()) && (isOpX<FAPP>(post->right()) || isLit(post->right())))
         {
-          if (!isLit(post->right()) && !isOpX<EXISTS>(qvars[post->left()]))
-            newargs[1] = getSingleRange(fullpost, post->left());
           hasrange[post->left()] += 1;
+          if (!isLit(post->right())/*&&!isOpX<EXISTS>(qvars[post->left()])*/)
+          {
+            Expr newrange = getSingleRange(fullpost, post->left());
+            if (newrange)
+            {
+              if (!negContext)
+                post = mk<AND>(post, newrange);
+              else
+                post = mk<OR>(post, mkNeg(newrange));
+            }
+          }
         }
         else if (qvars.count(post->right()) && (isOpX<FAPP>(post->left()) || isLit(post->left())))
         {
-          if (!isLit(post->left()) && !isOpX<EXISTS>(qvars[post->right()]))
-            newargs[0] = getSingleRange(fullpost, post->right());
           hasrange[post->right()] += 1;
+          if (!isLit(post->left())/*&&!isOpX<EXISTS>(qvars[post->right()])*/)
+          {
+            Expr newrange = getSingleRange(fullpost, post->right());
+            if (newrange)
+            {
+              if (!negContext)
+                post = mk<AND>(post, newrange);
+              else
+                post = mk<OR>(post, mkNeg(newrange));
+            }
+          }
         }
+
+        return post;
       }
+
+      if (isOpX<OR>(post))
+        negContext = true;
 
       for (int i = 0; i < post->arity(); ++i)
         if (!newargs[i])
-          newargs[i] = mutateAERanges(fullpost, post->arg(i), qvars, hasrange);
+          newargs[i] = mutateAERanges(fullpost, post->arg(i), qvars, hasrange,
+            negContext);
 
       return mknary(post->op(), newargs.begin(), newargs.end());
     }
@@ -1781,13 +1904,7 @@ namespace ufo
       if (isOpX<BOOL_TY>(typeOf(e)) && foundsel)
       {
         if (ranges.at(foundsel))
-          ret = mk<AND>(
-            // Lower bound (TODO: Static)
-            mk<GEQ>(qvar, mkMPZ(0, qvar->efac())),
-            // Upper bound
-            mk<LT>(qvar, ranges.at(foundsel)),
-            ret
-          );
+          ret = mk<AND>(ret, ranges.at(foundsel));
 
         // NULL because we already applied range
         return make_pair(ret, Expr(NULL));
@@ -1804,7 +1921,7 @@ namespace ufo
       for (int i = 0; i < post->arity(); ++i)
         newargs.push_back(NULL);
 
-      if ((isOpX<EXISTS>(post) || isOpX<FORALL>(post)) && post->first() == qvar->first())
+      if ((isOpX<EXISTS>(post)/*||isOpX<FORALL>(post)*/) && post->first() == qvar->first())
       {
         newargs.back() = coverWithRange(post->last(),
           getRanges(fullpost, qvar), qvar).first;
@@ -1832,7 +1949,7 @@ namespace ufo
       for (const auto& chc : ruleManager.chcs)
         if (chc.isQuery)
         {
-          newpost = chc.body;
+          newpost = chc.origbody;
           locvars = &chc.locVars;
         }
         else if (chc.isInductive)
@@ -1870,7 +1987,7 @@ namespace ufo
       // Rewrite ranges
       ExprUMap qvars;
       unordered_map<Expr,int> hasrange;
-      newpost = mutateAERanges(newpost, newpost, qvars, hasrange);
+      newpost = mutateAERanges(newpost, newpost, qvars, hasrange, false);
 
       if (alternver != -1 && alternver < 3)
         return newpost;
@@ -1928,7 +2045,11 @@ namespace ufo
         deferredCandidates[0].push_back(newpost);
 
       if (alternver >= 0)
+      {
+        cout << "unknown" << endl;
+        exit(1);
         return false;
+      }
 
       // try array candidates one-by-one (adapted from `synthesize`)
       for (auto & dcl: ruleManager.wtoDecls)
@@ -2432,7 +2553,7 @@ namespace ufo
   {
     ExprFactory m_efac;
     EZ3 z3(m_efac);
-    SMTUtils u(m_efac);
+    SMTUtils u(m_efac, to);
 
     CHCs ruleManager(m_efac, z3, debug - 2);
     auto res = ruleManager.parse(smt, doElim, doArithm);
