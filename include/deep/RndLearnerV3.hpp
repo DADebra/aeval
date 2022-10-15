@@ -1731,7 +1731,10 @@ namespace ufo
               // Assumes eliminateQuantifiers keeps the structure the same
               if (isOpX<AND>(varp_def))
                 varp_def = varp_def->last();
-              varp_def = varp_def->right();
+              if (varp_def->left() == tmpvar)
+                varp_def = varp_def->right();
+              else
+                varp_def = varp; // TODO: Might not be correct
               Expr inddiff = mk<MINUS>(varp_def, var);
               boundhi = replaceAll(boundhi, var, mk<MINUS>(var, inddiff));
               boundhi = simplifyArithm(simplifyArithm(boundhi));
@@ -1749,7 +1752,10 @@ namespace ufo
               // Assumes eliminateQuantifiers keeps the structure the same
               if (isOpX<AND>(varlo_def))
                 varlo_def = varlo_def->last();
-              varlo_def = varlo_def->right();
+              if (varlo_def->left() == tmpvar)
+                varlo_def = varlo_def->right();
+              else
+                varlo_def = var; // Non-deterministic variable
 
               // We have benchmarks which start with i = 1, so search for
               // a select/store in Init and use that index if < 
@@ -1826,11 +1832,11 @@ namespace ufo
         isOpX<MPZ>(post->left()) && getTerm<mpz_class>(post->left()) == 0)
           post = mk(post->op(), post->right()->left(), post->right()->right()->left());
         // TODO: Better definition of ranges, detect 2 lower ranges?
-        if (qvars.count(post->left()) && (isOpX<FAPP>(post->right()) || isLit(post->right())))
+        if (qvars.count(post->left())/* && (isOpX<FAPP>(post->right()) || isLit(post->right()))*/)
         {
           hasrange[post->left()] += 1;
-          if (!isLit(post->right())/*&&!isOpX<EXISTS>(qvars[post->left()])*/)
-          {
+          //if (!isLit(post->right())/*&&!isOpX<EXISTS>(qvars[post->left()])*/)
+          //{
             Expr newrange = getSingleRange(fullpost, post->left());
             if (newrange)
             {
@@ -1839,13 +1845,13 @@ namespace ufo
               else
                 post = mk<OR>(post, mkNeg(newrange));
             }
-          }
+          //}
         }
-        else if (qvars.count(post->right()) && (isOpX<FAPP>(post->left()) || isLit(post->left())))
+        else if (qvars.count(post->right())/* && (isOpX<FAPP>(post->left()) || isLit(post->left()))*/)
         {
           hasrange[post->right()] += 1;
-          if (!isLit(post->left())/*&&!isOpX<EXISTS>(qvars[post->right()])*/)
-          {
+          //if (!isLit(post->left())/*&&!isOpX<EXISTS>(qvars[post->right()])*/)
+          //{
             Expr newrange = getSingleRange(fullpost, post->right());
             if (newrange)
             {
@@ -1854,7 +1860,7 @@ namespace ufo
               else
                 post = mk<OR>(post, mkNeg(newrange));
             }
-          }
+          //}
         }
 
         return post;
@@ -2021,31 +2027,30 @@ namespace ufo
       }
       boot = false;
 
-      Expr newpost = generalizeArrQuery();
-      // Check
-      if (newpost)
-      {
-        if (printLog)
-          outs () << "- - - Bootstrapped cand for " << decls[0] << ": "
-                  << newpost << (printLog >= 3 ? " 😎\n" : "\n");
-        candidates[0].clear();
-        candidates[0].push_back(newpost);
-        if (multiHoudini(ruleManager.dwtoCHCs))
-        {
-          assignPrioritiesForLearned();
-          if (checkAllLemmas())
-          {
-            outs () << "Success after bootstrapping\n";
-            printSolution();
-            return true;
-          }
-        }
-      }
-      else
-        deferredCandidates[0].push_back(newpost);
-
       if (alternver >= 0)
       {
+        Expr newpost = generalizeArrQuery();
+        // Check
+        if (newpost)
+        {
+          if (printLog)
+            outs () << "- - - Bootstrapped cand for " << decls[0] << ": "
+                    << newpost << (printLog >= 3 ? " 😎\n" : "\n");
+          candidates[0].clear();
+          candidates[0].push_back(newpost);
+          if (multiHoudini(ruleManager.dwtoCHCs))
+          {
+            assignPrioritiesForLearned();
+            if (checkAllLemmas())
+            {
+              outs () << "Success after bootstrapping\n";
+              printSolution();
+              return true;
+            }
+          }
+        }
+        else
+          deferredCandidates[0].push_back(newpost);
         cout << "unknown" << endl;
         exit(1);
         return false;
