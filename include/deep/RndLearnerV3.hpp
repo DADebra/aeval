@@ -916,6 +916,8 @@ namespace ufo
         Expr cand;
         if (deferredCandidates[invNum].empty())
         {
+          if (alternver >= 0)
+            return false;
           rndStarted = true;
           cand = sf.getFreshCandidate();  // try simple array candidates first
           if (cand != NULL && !sf.gf.initialized && isOpX<FORALL>(cand) && isOpX<IMPL>(cand->last()))
@@ -1079,7 +1081,8 @@ namespace ufo
         tribool b = checkCHC(*hr, candidates);
         if (b || indeterminate(b))
         {
-          if (printLog >= 3) outs () << "    CHC check failed\n";
+          if (printLog >= 3) outs () << "    CHC check failed with " <<
+            (indeterminate(b) ? "unknown" : "sat") << "\n";
           int invNum = getVarIndex(hr->dstRelation, decls);
           SamplFactory& sf = sfs[invNum].back();
 
@@ -1781,7 +1784,7 @@ namespace ufo
       }
 
       for (int i = 0; i < range_arrs.size(); ++i)
-        out[range_arrs[i]] = ranges[i];
+        out[range_arrs[i]] = simplifyBool(simplifyArithm(ranges[i]));
 
       return out;
     }
@@ -1985,6 +1988,8 @@ namespace ufo
       if (locvars)
         newpost = getExists(newpost, *locvars);
 
+      newpost = regularizeQF(newpost);
+
       newpost = mkNeg(newpost);
 
       if (alternver != -1 && alternver < 2)
@@ -2047,12 +2052,12 @@ namespace ufo
               printSolution();
               return true;
             }
+            else
+              deferredCandidates[0].push_front(newpost);
           }
+          else
+            deferredCandidates[0].push_front(newpost);
         }
-        else
-          deferredCandidates[0].push_back(newpost);
-        cout << "unknown" << endl;
-        exit(1);
         return false;
       }
 
