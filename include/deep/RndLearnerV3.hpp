@@ -899,6 +899,9 @@ namespace ufo
           for (auto & b : a.second)
             outs () << "  Deferred cand for " << a.first << ": " << b << "\n";
 
+      for (int i = 0; i < deferredCandidates.size(); ++i)
+        sfs[i].back().gf.addDeferredCands(deferredCandidates[i]);
+
       map<int, int> defSz;
       for (auto & a : deferredCandidates) defSz[a.first] = a.second.size();
       ExprSet cands;
@@ -916,8 +919,8 @@ namespace ufo
         Expr cand;
         if (deferredCandidates[invNum].empty())
         {
-          if (alternver >= 0)
-            return false;
+          if (alternver >= 0 && !sf.gf.initialized)
+            return false; // Avoid using FreqHorn's base array grammar
           rndStarted = true;
           cand = sf.getFreshCandidate();  // try simple array candidates first
           if (cand != NULL && !sf.gf.initialized && isOpX<FORALL>(cand) && isOpX<IMPL>(cand->last()))
@@ -2013,7 +2016,7 @@ namespace ufo
     bool bootstrap()
     {
       if (printLog) outs () << "\nBOOTSTRAPPING\n=============\n";
-      if (alternver != 0)
+      if (alternver < 0 || (alternver >= 1 && !sfs[0].back().gf.initialized))
       {
         filterUnsat();
 
@@ -2057,6 +2060,11 @@ namespace ufo
           }
           else
             deferredCandidates[0].push_front(newpost);
+        }
+        if (alternver < 1)
+        {
+          outs() << "unknown\n";
+          exit(1);
         }
         return false;
       }

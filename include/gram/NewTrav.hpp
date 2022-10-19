@@ -1043,6 +1043,11 @@ class NewTrav : public Traversal
 
   void handleGramMod()
   {
+    if (!lastcand)
+    {
+      grammodified = false;
+      return; // We haven't started enumerating
+    }
     assert(0 && "NewTrav doesn't support modifying Grammar mid-traversal!");
     grammodified = false;
   }

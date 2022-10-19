@@ -278,6 +278,16 @@ namespace ufo
       consts[mk<INT_TY>(m_efac)].insert(mkMPZ(iconst, m_efac));
     }
 
+    template<typename Range>
+    void addDeferredCands(const Range& cands)
+    {
+      if (!initialized)
+        return;
+      NT defcandsnt = gram->addNt("DEF_CANDS", mk<BOOL_TY>(m_efac));
+      for (const auto& c : cands)
+        gram->addProd(defcandsnt, c);
+    }
+
     void setParams(TravParams _params)
     {
       assert(!initialized);
@@ -523,6 +533,7 @@ namespace ufo
         aug_gram << "(declare-fun POST_COND () Bool)\n";
         aug_gram << "(declare-fun PRE_COND () Bool)\n";
         aug_gram << "(declare-fun PRE_COND_PART () Bool)\n";
+        aug_gram << "(declare-fun DEF_CANDS () Bool)\n";
 
 	aug_gram << user_cfg.str();
 
