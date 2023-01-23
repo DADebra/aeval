@@ -792,7 +792,7 @@ namespace ufo
     return eliminateQuantifiers(tmp, vars);
   }
 
-  inline static Expr keepQuantifiers(Expr fla, ExprVector& vars)
+  inline static Expr keepQuantifiers(Expr fla, const ExprVector& vars)
   {
     ExprSet varsSet;
     filter (fla, bind::IsConst (), inserter(varsSet, varsSet.begin()));
@@ -800,7 +800,7 @@ namespace ufo
     return eliminateQuantifiers(fla, varsSet);
   }
 
-  inline static Expr keepQuantifiersRepl(Expr fla, ExprVector& vars)
+  inline static Expr keepQuantifiersRepl(Expr fla, const ExprVector& vars)
   {
     ExprSet varsSet;
     filter (fla, bind::IsConst (), inserter(varsSet, varsSet.begin()));

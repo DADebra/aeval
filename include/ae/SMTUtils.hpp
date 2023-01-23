@@ -452,7 +452,7 @@ namespace ufo
     Expr simplifiedAnd(Expr a, Expr b)
     {
       ExprVector disjs, vars;
-      flatten(a, disjs, false, vars, [](Expr a, ExprVector& b){return a;});
+      flatten(a, disjs, false, vars, [](Expr a, const ExprVector& b){return a;});
       for (auto it = disjs.begin(); it != disjs.end(); )
       {
         if (!isSat(*it, b)) it = disjs.erase(it);
@@ -561,8 +561,8 @@ namespace ufo
       return conjoin(lits, efac);
     }
 
-    bool flatten(Expr fla, ExprVector& prjcts, bool splitEqs, ExprVector& vars,
-                 function<Expr(Expr, ExprVector& vars)> qe) // lazy DNF-ization
+    bool flatten(Expr fla, ExprVector& prjcts, bool splitEqs, const ExprVector& vars,
+                 function<Expr(Expr, const ExprVector& vars)> qe) // lazy DNF-ization
     {
       smt.reset();
       Expr tmp = fla;
