@@ -3,6 +3,8 @@
 
 #include "RndLearner.hpp"
 
+#include "ae/CVCAbduce.hpp"
+
 #ifdef HAVE_ARMADILLO
 #include "DataLearner.hpp"
 #endif
@@ -286,9 +288,9 @@ namespace ufo
       Expr allLemmas = sf.getAllLemmas();
       if (!sf.gf.initialized && (containsOp<FORALL>(cnd) || containsOp<FORALL>(allLemmas)))
       {
-        if (containsOp<FORALL>(cnd))
+        /*if (containsOp<FORALL>(cnd))
           replaceArrRangeForIndCheck (invNum, cnd, candidates[invNum]);
-        else
+        else*/
           candidates[invNum].push_back(cnd);
         return true;
       }
@@ -903,7 +905,11 @@ namespace ufo
         sfs[i].back().gf.addDeferredCands(deferredCandidates[i]);
 
       map<int, int> defSz;
-      for (auto & a : deferredCandidates) defSz[a.first] = a.second.size();
+      for (auto & a : deferredCandidates)
+      {
+        defSz[a.first] = a.second.size();
+        maxAttempts += a.second.size();
+      }
       ExprSet cands;
       bool rndStarted = false;
       for (int i = 0; i < maxAttempts; i++)
@@ -1579,30 +1585,67 @@ namespace ufo
       return rangecount;
     }
 
-    // Output: K: Array, V: Full new range
-    ExprUMap getRanges(Expr fullpost, Expr qvar)
+    // Returns all arrays selected by 'qvar' in 'fullpost'
+    ExprVector getArrsAccessed(Expr fullpost, Expr qvar)
     {
-      ExprUMap out;
-
-      // Find the array the range is using
       ExprVector range_arrs;
-      filter(fullpost, [&] (Expr e) { return isOpX<SELECT>(e) && e->last() == qvar; }, inserter(range_arrs, range_arrs.begin()));
+      function<bool(Expr)> findqvar = [&] (Expr e) -> bool {
+        if (e == qvar)
+          return true;
+        if (isOpX<SELECT>(e))
+        {
+          if (findqvar(e->right()))
+          {
+            range_arrs.push_back(e);
+            return true;
+          }
+          return findqvar(e->left());
+        }
+        bool ret = false;
+        for (int i = 0; i < e->arity(); ++i)
+          ret |= findqvar(e->arg(i));
+        return ret;
+      };
+      //filter(fullpost, [&] (Expr e) { return isOpX<SELECT>(e) && e->last() == qvar; }, inserter(range_arrs, range_arrs.begin()));
+      findqvar(fullpost);
       if (range_arrs.size() == 0)
       {
         outs() << "Bootstrap: Couldn't find array accessed by " << qvar << endl;
-        return out;
+        return range_arrs;
       }
 
       // Fix up range_arrs to be just the arrays
       for (Expr& e : range_arrs) e = e->first();
 
-      Expr loopbody, initbody;
+      return range_arrs;
+    }
+
+    // Output: K: Array, V: Full new range
+    typedef unordered_map<std::pair<Expr,Expr>,ExprUMap> GetRangeCache;
+    GetRangeCache _getRangesCache;
+    ExprUMap getRanges(Expr fullpost, Expr qvar)
+    {
+      std::pair<Expr,Expr> key(fullpost, qvar);
+      if (_getRangesCache.count(key) != 0)
+        return _getRangesCache.at(key);
+      ExprUMap out;
+
+      ExprVector range_arrs = getArrsAccessed(fullpost, qvar);
+
+      // Find the array the range is using
+      Expr loopbody, initbody, querybody;
+      ExprSet loopLocVars;
       for (const auto& chc : ruleManager.chcs)
       {
         if (chc.isInductive)
+        {
           loopbody = chc.body;
+          loopLocVars.insert(chc.dstVars.begin(), chc.dstVars.end());
+        }
         else if (chc.isFact)
           initbody = replaceAll(chc.body, chc.dstVars, invarVarsShort[0]);
+        else if (chc.isQuery)
+          querybody = getExists(chc.body, chc.locVars);
       }
 
       if (alternver < 4)
@@ -1645,6 +1688,7 @@ namespace ufo
           if (isOpX<FALSE>(varlo_def))
           {
             cout << "Bootstrap: Failed to find definition for "<<var<<endl;
+            _getRangesCache.emplace(key, out);
             return out;
           }
           // Assumes eliminateQuantifiers keeps the structure the same
@@ -1656,6 +1700,7 @@ namespace ufo
           out[range_arrs[i]] =
             mk<AND>(mk<GEQ>(qvar, boundlo), mk<LT>(qvar, boundhi));
         }
+        _getRangesCache.emplace(key, out);
         return out;
       }
 
@@ -1681,9 +1726,9 @@ namespace ufo
             inserter(alliters_init[i], alliters_init[i].begin()));
         }
 
-        ExprUSet allprimed(ruleManager.invVarsPrime[decls[0]].begin(),
+        ExprSet allprimed(ruleManager.invVarsPrime[decls[0]].begin(),
             ruleManager.invVarsPrime[decls[0]].end());
-        ExprUSet allunprimed(invarVarsShort[0].begin(),
+        ExprSet allunprimed(invarVarsShort[0].begin(),
             invarVarsShort[0].end());
         for (int i = 0; i < alliters.size(); ++i)
         {
@@ -1707,6 +1752,7 @@ namespace ufo
                 if (isOpX<FALSE>(def))
                 {
                   cout << "Bootstrap: Failed to find definition for "<<vp<<endl;
+                  _getRangesCache.emplace(key, out);
                   return out;
                 }
                 if (isOpX<AND>(def))
@@ -1719,11 +1765,36 @@ namespace ufo
             ExprVector itervars;
             filter(tmpiter, [&](Expr e){return allunprimed.count(e) != 0;},
                 inserter(itervars, itervars.begin()));
+            if (itervars.size() == 0)
+            {
+              filter(tmpiter, [&](Expr e){return loopLocVars.count(e) != 0;},
+                  inserter(itervars, itervars.begin()));
+              if (itervars.size() == 0)
+                continue;
+              Expr _newrange = ufo::eliminateQuantifiers(loopbody, allprimed);
+              ExprVector newrange(_newrange->args_begin(), _newrange->args_end());
+              for (auto itr = newrange.begin(); itr != newrange.end();)
+              {
+                for (const Expr& var : itervars)
+                  if (contains(*itr, var))
+                  {
+                    ++itr;
+                    continue;
+                  }
+                itr = newrange.erase(itr);
+              }
+              if (ranges[i])
+                ranges[i] = mk<OR>(ranges[i], conjoin(newrange, m_efac));
+              else
+                ranges[i] = conjoin(newrange, m_efac);
+              continue;
+            }
             Expr boundlo = tmpiter, boundhi = tmpiter;
             for (const Expr& var : itervars)
             {
               Expr varp = replaceAll(var, invarVarsShort[0], ruleManager.invVarsPrime[decls[0]]);
               Expr tmpvar = mkConst(mkTerm<string>("tmpqevar", m_efac), typeOf(var));
+              Expr tmpvar2 = mkConst(mkTerm<string>("tmpqevar2", m_efac), typeOf(var));
               ExprVector _qvars{varp};
               // Get max
               Expr varp_def = ufo::eliminateQuantifiers(
@@ -1732,12 +1803,13 @@ namespace ufo
               if (isOpX<FALSE>(varp_def))
               {
                 cout<<"Bootstrap: Failed to find definition for "<<varp<<endl;
+                _getRangesCache.emplace(key, out);
                 return out;
               }
               // Assumes eliminateQuantifiers keeps the structure the same
               if (isOpX<AND>(varp_def))
                 varp_def = varp_def->last();
-              if (varp_def->left() == tmpvar)
+              if (isOpX<EQ>(varp_def) && varp_def->left() == tmpvar)
                 varp_def = varp_def->right();
               else
                 varp_def = varp; // TODO: Might not be correct
@@ -1753,12 +1825,13 @@ namespace ufo
               if (isOpX<FALSE>(varlo_def))
               {
                 cout << "Bootstrap: Failed to find definition for "<<var<<endl;
+                _getRangesCache.emplace(key, out);
                 return out;
               }
               // Assumes eliminateQuantifiers keeps the structure the same
               if (isOpX<AND>(varlo_def))
                 varlo_def = varlo_def->last();
-              if (varlo_def->left() == tmpvar)
+              if (isOpX<EQ>(varlo_def) && varlo_def->left() == tmpvar)
                 varlo_def = varlo_def->right();
               else
                 varlo_def = var; // Non-deterministic variable
@@ -1769,15 +1842,67 @@ namespace ufo
 
               for (const Expr& iter_init : alliters_init[i])
               {
-                if (u.isTrue(mk<LT>(iter_init->right(), min)))
+                Expr ltcand = mk<LEQ>(iter_init->right(), min);
+                /*candidates[0].clear();
+                candidates[0].push_back(ltcand);
+                if (multiHoudini(ruleManager.dwtoCHCs))*/
+                if (u.isTrue(ltcand))
                   min = iter_init->right();
               }
 
               boundlo = replaceAll(boundlo, var, min);
               boundlo = simplifyArithm(simplifyArithm(boundlo));
+
+              //_qvars.push_back(varp);
+              _qvars[0] = tmpvar;
+              Expr noprimed_body =
+                ufo::eliminateQuantifiers(loopbody, allprimed);
+              /*Expr varup_def = ufo::eliminateQuantifiers(
+                mk<AND>(loopbody, mk<GT>(tmpvar, var)), _qvars);*/
+              /*Expr varupabd = cvcAbduce(mk<GT>(tmpvar, var), noprimed_body);
+              if (varupabd)
+              {
+                if (isOpX<EQ>(varupabd) || isOpX<LEQ>(varupabd) || isOpX<GEQ>(varupabd))
+                {
+                  Expr varup_def = ufo::eliminateQuantifiers(
+                    mk<AND>(varupabd, mk<EQ>(tmpvar2, tmpvar)), _qvars);
+                  if (isOpX<AND>(varup_def))
+                    varup_def = varup_def->last();
+                  assert(isOpX<EQ>(varup_def) || isOpX<LEQ>(varup_def) || isOpX<GEQ>(varup_def));
+                  if (varup_def->left() == tmpvar2)
+                    varup_def = varup_def->right();
+                  else if (varup_def->right() == tmpvar2)
+                    varup_def = varup_def->left();
+                  else
+                    cout << "Bootstrap: Unrecognized abduction form post-qe: "<<varup_def<<endl;
+                }
+                else
+                  cout << "Bootstrap: Unrecognized abduction form: "<<varupabd<<endl;
+              }
+              else
+                cout << "Bootstrap: Failed to abduce variable: "<<var<<endl;*/
             }
-            Expr newrange = 
-              mk<AND>(mk<GEQ>(qvar, boundlo), mk<LEQ>(qvar, boundhi));
+            Expr newrange =
+              mk<AND>(mk<GT>(qvar, boundlo), mk<LT>(qvar, boundhi));
+            // TODO: Might not work for very finite cases
+            if (u.implies(sfs[0].back().getAllLemmas(), mk<LEQ>(boundlo, boundhi)))
+              newrange = mk<AND>(mk<GEQ>(qvar, boundlo), mk<LEQ>(qvar, boundhi));
+            else if (u.implies(sfs[0].back().getAllLemmas(), mk<LEQ>(boundhi, boundlo)))
+              newrange = mk<AND>(mk<GEQ>(qvar, boundhi), mk<LEQ>(qvar, boundlo));
+            else if (u.isSat(mk<AND>(sfs[0].back().getAllLemmas(), newrange)))
+              newrange = mk<AND>(mk<GEQ>(qvar, boundlo), mk<LEQ>(qvar, boundhi));
+            else
+            {
+              newrange = mk<AND>(mk<GT>(qvar, boundhi), mk<LT>(qvar, boundlo));
+              if (u.isSat(mk<AND>(sfs[0].back().getAllLemmas(), newrange)))
+                newrange = mk<AND>(mk<GEQ>(qvar, boundhi), mk<LEQ>(qvar, boundlo));
+              else
+              {
+                cout << "Bootstrap: Failed to order bounds: l=" << boundlo
+                  << ", h=" << boundhi << endl;
+                newrange = mk<AND>(mk<GEQ>(qvar, boundlo), mk<LEQ>(qvar, boundhi));
+              }
+            }
             if (ranges[i])
               ranges[i] = mk<OR>(ranges[i], newrange);
             else
@@ -1787,8 +1912,10 @@ namespace ufo
       }
 
       for (int i = 0; i < range_arrs.size(); ++i)
-        out[range_arrs[i]] = simplifyBool(simplifyArithm(ranges[i]));
+        if (ranges[i]) // Can be NULL if a given array isn't accessed
+          out[range_arrs[i]] = simplifyBool(simplifyArithm(ranges[i]));
 
+      _getRangesCache.emplace(key, out);
       return out;
     }
 
@@ -1884,7 +2011,7 @@ namespace ufo
     }
 
     std::pair<Expr,Expr> coverWithRange(Expr e, const ExprUMap& ranges,
-      Expr qvar)
+      Expr qvar, bool isexists)
     {
       if (isLit(e) || isOpX<FDECL>(e))
         return make_pair(e, Expr(NULL));
@@ -1896,7 +2023,7 @@ namespace ufo
       Expr foundsel = NULL;
       for (int i = 0; i < e->arity(); ++i)
       {
-        auto argret = coverWithRange(e->arg(i), ranges, qvar);
+        auto argret = coverWithRange(e->arg(i), ranges, qvar, isexists);
         if (!argret.first)
             return make_pair(Expr(NULL), Expr(NULL));
         if (argret.second)
@@ -1915,8 +2042,13 @@ namespace ufo
       Expr ret = mknary(e->op(), newargs.begin(), newargs.end());
       if (isOpX<BOOL_TY>(typeOf(e)) && foundsel)
       {
-        if (ranges.at(foundsel))
-          ret = mk<AND>(ret, ranges.at(foundsel));
+        if (ranges.count(foundsel) != 0 && ranges.at(foundsel))
+        {
+          if (isexists)
+            ret = mk<AND>(ranges.at(foundsel), ret);
+          else
+            ret = mk<OR>(mkNeg(ranges.at(foundsel)), ret);
+        }
 
         // NULL because we already applied range
         return make_pair(ret, Expr(NULL));
@@ -1931,17 +2063,18 @@ namespace ufo
         return post;
 
       for (int i = 0; i < post->arity(); ++i)
-        newargs.push_back(NULL);
+        newargs.push_back(synthAERange(fullpost, post->arg(i), qvar));
 
-      if ((isOpX<EXISTS>(post)/*||isOpX<FORALL>(post)*/) && post->first() == qvar->first())
+      if (isOpX<EXISTS>(post) && newargs.front() == qvar->first())
       {
-        newargs.back() = coverWithRange(post->last(),
-          getRanges(fullpost, qvar), qvar).first;
+        newargs.back() = coverWithRange(newargs.back(),
+          getRanges(fullpost, qvar), qvar, true).first;
       }
-
-      for (int i = 0; i < post->arity(); ++i)
-        if (!newargs[i])
-          newargs[i] = synthAERange(fullpost, post->arg(i), qvar);
+      else if (isOpX<FORALL>(post) && newargs.front() == qvar->first())
+      {
+        newargs.back() = coverWithRange(newargs.back(),
+          getRanges(fullpost, qvar), qvar, false).first;
+      }
 
       return mknary(post->op(), newargs.begin(), newargs.end());
     }
@@ -2013,6 +2146,106 @@ namespace ufo
       return newpost;
     }
 
+    void orderedQVars(Expr e, ExprVector& qvars)
+    {
+      if (isOpX<FORALL>(e) || isOpX<EXISTS>(e))
+      {
+        for (int i = 0; i < e->arity() - 1; ++i)
+          qvars.push_back(mk<FAPP>(e->arg(i)));
+        return orderedQVars(e->last(), qvars);
+      }
+      for (int i = 0; i < e->arity(); ++i)
+        orderedQVars(e->arg(i), qvars);
+    }
+
+    Expr alternAddRanges(Expr cand)
+    {
+      //ExprUMap qvars;
+      //unordered_map<Expr,int> hasrange;
+      //Expr ret = mutateAERanges(cand, cand, qvars, hasrange, false);
+      //assert(ret == cand); // TODO: Fix bug that makes this false
+
+      ExprVector qvars;
+      orderedQVars(cand, qvars);
+      for (auto& qv : qvars)
+        cand = synthAERange(cand, cand, qv);
+      return cand;
+    }
+
+    bool bootstrapCheckCand(Expr cand)
+    {
+      if (printLog)
+        outs () << "- - - Bootstrapped cand for " << decls[0] << ": "
+                << cand << (printLog >= 3 ? " 😎\n" : "\n");
+      candidates[0].clear();
+      candidates[0].push_back(cand);
+      if (multiHoudini(ruleManager.dwtoCHCs))
+      {
+        assignPrioritiesForLearned();
+        if (checkAllLemmas())
+        {
+          outs () << "Success after bootstrapping\n";
+          printSolution();
+          return true;
+        }
+      }
+      return false;
+    }
+
+    bool alternGenDataCands()
+    {
+      ExprUSet qiters;
+      bool hasconstarr = false;
+      for (const auto& hr : ruleManager.chcs)
+        if (containsOp<CONST_ARRAY>(hr.body))
+        {
+          hasconstarr = true;
+          break;
+        }
+      for (const auto qvptr : qvits[0])
+        qiters.insert(qvptr->qv);
+      for (const Expr& cand : arrCands[0])
+      {
+        ExprVector qvs;
+        filter(cand, [&](const Expr& e){return qiters.count(e) != 0;},
+          inserter(qvs, qvs.end()));
+        if (qvs.size() == 0)
+        {
+          candidates[0].push_back(cand);
+          continue;
+        }
+        for (int i = 0; i < qvs.size(); ++i)
+          qvs[i] = qvs[i]->left();
+        function<bool(int,Expr)> perm = [&] (int pos, Expr e) -> bool
+        {
+          if (pos == qvs.size())
+          {
+            if (hasconstarr)
+            {
+              if (bootstrapCheckCand(e))
+                return true;
+              deferredCandidates[0].push_front(e);
+            }
+            e = alternAddRanges(e);
+            if (bootstrapCheckCand(e))
+              return true;
+            deferredCandidates[0].push_front(e);
+            return false;
+          }
+          ExprVector newe(2);
+          newe[0] = qvs[pos]; newe[1] = e;
+          if (perm(pos + 1, mknary<FORALL>(newe)))
+            return true;
+          if (perm(pos + 1, mknary<EXISTS>(newe)))
+            return true;
+          return false;
+        };
+        if (perm(0, cand))
+          return true;
+      }
+      return false;
+    }
+
     bool bootstrap()
     {
       if (printLog) outs () << "\nBOOTSTRAPPING\n=============\n";
@@ -2033,6 +2266,24 @@ namespace ufo
 
         if (!dDisj) simplifyLemmas();
       }
+
+      if (alternver >= 1)
+      {
+        for (const auto& kv : deferredCandidates)
+          candidates[kv.first].insert(candidates[kv.first].end(),
+            kv.second.begin(), kv.second.end());
+        if (multiHoudini(ruleManager.dwtoCHCs))
+        {
+          assignPrioritiesForLearned();
+          if (checkAllLemmas())
+          {
+            outs () << "Success after bootstrapping\n";
+            printSolution();
+            return true;
+          }
+        }
+      }
+
       boot = false;
 
       if (alternver >= 0)
@@ -2041,26 +2292,15 @@ namespace ufo
         // Check
         if (newpost)
         {
-          if (printLog)
-            outs () << "- - - Bootstrapped cand for " << decls[0] << ": "
-                    << newpost << (printLog >= 3 ? " 😎\n" : "\n");
-          candidates[0].clear();
-          candidates[0].push_back(newpost);
-          if (multiHoudini(ruleManager.dwtoCHCs))
-          {
-            assignPrioritiesForLearned();
-            if (checkAllLemmas())
-            {
-              outs () << "Success after bootstrapping\n";
-              printSolution();
-              return true;
-            }
-            else
-              deferredCandidates[0].push_front(newpost);
-          }
-          else
-            deferredCandidates[0].push_front(newpost);
+          if (bootstrapCheckCand(newpost))
+            return true;
         }
+        if (alternver >= 5 && alternGenDataCands())
+          return true;
+
+        if (newpost)
+          deferredCandidates[0].push_front(newpost);
+
         if (alternver < 1)
         {
           outs() << "unknown\n";
@@ -2628,8 +2868,11 @@ namespace ufo
     if (dBoot)
       if (ds.bootstrap()) return true;
 
-    ds.calculateStatistics();
-    ds.deferredPriorities();
+    if (alternver < 0)
+    {
+      ds.calculateStatistics();
+      ds.deferredPriorities();
+    }
     if (ds.readLemmas())
       return true;
     std::srand(std::time(0));

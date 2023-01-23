@@ -367,6 +367,12 @@ namespace ufo
           else
           {
             bvar = replaceAll(vars[i], srcVars, bindVars[l1-1]);
+            if (isOpX<SELECT>(bvar))
+            {
+              vers.push_back(bvar);
+              allVars.insert(bindVars[l1-1][-var-1]);
+              ai++;
+            }
             bvar = replaceAll(bvar, bindVars[l1-1][-var-1], bindVars[l1][-var-1]);
             allVars.insert(bindVars[l1][-var-1]);
             ai++;
@@ -620,7 +626,7 @@ namespace ufo
         ExprVector& srcVars = ruleManager.chcs[loop[0]].srcVars;
         if (models[srcRel].size() > 0) continue;
 
-        ExprVector vars;
+        ExprVector vars, uniqvars;
         for (int i = 0; i < srcVars.size(); i++)
         {
           Expr t = typeOf(srcVars[i]);
@@ -628,6 +634,7 @@ namespace ufo
           {
             mainInds.push_back(i);
             vars.push_back(srcVars[i]);
+            uniqvars.push_back(srcVars[i]);
           }
           else if (isOpX<ARRAY_TY>(t) && ruleManager.hasArrays[srcRel])
           {
@@ -635,12 +642,14 @@ namespace ufo
             if (v != NULL)
             {
               vars.push_back(v);
+              vars.push_back(v);
+              uniqvars.push_back(v);
               mainInds.push_back(-i - 1);  // to be on the negative side
             }
           }
         }
 
-        if (vars.size() < 2 && cyc == ruleManager.cycles.size() - 1)
+        if (uniqvars.size() < 2 && cyc == ruleManager.cycles.size() - 1)
           continue; // does not make much sense to run with only one var when it is the last cycle
         invVars[srcRel] = vars;
 
@@ -689,7 +698,7 @@ namespace ufo
         vector<ExprVector> versVars;
         ExprSet allVars;
         ExprVector diseqs;
-        fillVars(srcRel, srcVars, vars, l, loop.size(), mainInds, versVars, allVars);
+        fillVars(srcRel, srcVars, uniqvars, l, loop.size(), mainInds, versVars, allVars);
         getOptimConstr(versVars, vars.size(), srcVars, constr[srcRel], NULL, diseqs);
 
         Expr cntvar = bind::intConst(mkTerm<string> ("_FH_cnt", m_efac));

@@ -120,6 +120,8 @@ namespace ufo
       ExprSet shrPre = pre;
       shrinkArgs(args, shrPre, cellProperty);
       args.push_back(mk<IMPL>(conjoin(shrPre, m_efac), cellProperty));
+      if (args.size() == 1)
+        return args.back();
       return mknary<FORALL> (args);
     }
 

@@ -4595,7 +4595,7 @@ namespace ufo
     else if (!isOpX<TRUE>(exp) && !isOpX<FALSE>(exp))
     {
       errs () << "unable lit: " << *exp << "\n";
-      assert(0);
+      //assert(0);
     }
   }
 
@@ -4627,6 +4627,10 @@ namespace ufo
       return isSameArray(a1->left(), a2);
     if (isOpX<STORE>(a2))
       return isSameArray(a1, a2->left());
+    if (isOpX<ITE>(a1))
+      return isSameArray(a1->arg(1), a2) && isSameArray(a1->arg(2), a2);
+    if (isOpX<ITE>(a2))
+      return isSameArray(a1, a2->arg(1)) && isSameArray(a1, a2->arg(2));
     return false;
   }
 
