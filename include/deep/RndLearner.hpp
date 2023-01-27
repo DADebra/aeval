@@ -45,6 +45,7 @@ namespace ufo
 
     int invNumber;
     int numOfSMTChecks;
+    int queryInvNum;
 
     bool kind_succeeded;      // interaction with k-induction
     bool oneInductiveProof;
@@ -556,6 +557,10 @@ namespace ufo
       sf.gf.analyze(ruleManager);
       sf.initialize_gram(gramfile, lexical_cast<string>(invDecl), b4simpl);
 
+      for (const auto& chc : ruleManager.chcs)
+        if (chc.isQuery && chc.srcRelation == invDecl)
+          queryInvNum = invNumber;
+
       invNumber++;
     }
 
@@ -975,8 +980,9 @@ namespace ufo
           u.removeRedundantConjuncts(lms);
         }
 
-        lemmaFile << "(assert (= " << lexical_cast<string>(decls[i]) << " " <<
-          m_z3.toSmtLib(conjoin(lms, m_efac)) << "))\n";
+        lemmaFile << "(assert (= " << lexical_cast<string>(decls[i]) << " ";
+        u.print(conjoin(lms, m_efac), lemmaFile);
+        lemmaFile << "))\n";
       }
       lemmaFile << flush;
     }

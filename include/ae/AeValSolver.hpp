@@ -41,18 +41,21 @@ namespace ufo
 
     bool debug;
     unsigned fresh_var_ind;
+    bool simplify;
 
   public:
 
-    AeValSolver (Expr _s, Expr _t, ExprSet &_v) :
-    s(_s), t(_t), v(_v),
+    template <typename Range>
+    AeValSolver (Expr _s, Expr _t, const Range &_v, bool _simplify = true) :
+    s(_s), t(_t), v(_v.begin(), _v.end()),
     efac(s->getFactory()),
     z3(efac),
     smt (z3),
     u(efac),
     fresh_var_ind(0),
     partitioning_size(0),
-    debug(0)
+    debug(0),
+    simplify(_simplify)
     {
       filter (boolop::land(s,t), bind::IsConst (), back_inserter (stVars));
       getConj(t, tConjs);
@@ -323,7 +326,10 @@ namespace ufo
 
         if (!cnjs.empty())
         {
-          Expr tmp = simplifyBool(disjoin(cnjs, efac));
+
+          Expr tmp = disjoin(cnjs, efac);
+          if (simplify)
+            tmp = simplifyBool(tmp);
           if (!isOpX<TRUE>(tmp)) common.insert(tmp);
         }
         prs = conjoin(common, efac);
@@ -332,7 +338,10 @@ namespace ufo
       {
         prs = disjoin(projections, efac);
       }
-      return simplifyBool(mk<AND>(s, prs));
+      Expr ret = mk<AND>(s, prs);
+      if (simplify)
+        ret = simplifyBool(ret);
+      return std::move(ret);
     }
 
     /**
@@ -495,7 +504,7 @@ namespace ufo
      */
     Expr getAssignmentForVar(Expr var, Expr exp)
     {
-      exp = simplifyArithmConjunctions(exp);
+      exp = simplifyArithmConjunctions(exp, false, simplify);
       if (debug) outs () << "getAssignmentForVar " << *var << " in " << *exp << "\n";
 
       bool isInt = bind::isIntConst(var);
@@ -693,7 +702,9 @@ namespace ufo
 
       for (auto& exp2: skv) {
         refreshMapEntry(m, exp2);
-        entr = simplifyBool (u.simplifyITE (replaceAll(entr, exp2, m[exp2])));
+        entr = u.simplifyITE (replaceAll(entr, exp2, m[exp2]));
+        if (simplify)
+          entr = simplifyBool (entr);
       }
 
       m[var] = u.numericUnderapprox(mk<EQ>(var, entr))->right();
@@ -726,26 +737,27 @@ namespace ufo
     return isNonlinear(e);
   }
 
-  inline static Expr coreQE(Expr fla, ExprSet& vars)
+  template <typename Range>
+  inline static Expr coreQE(Expr fla, const Range& vars, bool simplify = true)
   {
     if (!emptyIntersect(fla, vars) &&
         !containsOp<FORALL>(fla) && !containsOp<EXISTS>(fla) && !qeUnsupported(fla))
     {
-      AeValSolver ae(mk<TRUE>(fla->getFactory()), fla, vars); // exists quantified . formula
-      if (ae.solve()) return ae.getValidSubset();
+      AeValSolver ae(mk<TRUE>(fla->getFactory()), fla, vars, simplify); // exists quantified . formula
+      if (ae.solve()) return ae.getValidSubset(true);
       else return mk<TRUE>(fla->getFactory());
     }
     return fla;
   };
 
-  inline static Expr coreQE(Expr fla, ExprVector& vars)
+  /*inline static Expr coreQE(Expr fla, const ExprVector& vars)
   {
     ExprSet varsSet;
     for (auto & v : vars) varsSet.insert(v);
     return coreQE(fla, varsSet);
-  }
+  }*/
 
-  template<typename Range> static Expr eliminateQuantifiers(Expr fla, Range& qVars,
+  template<typename Range> static Expr eliminateQuantifiers(Expr fla, const Range& qVars,
                                        bool doArithm = true, bool doCore = true, bool doBool = true)
   {
     if (qVars.size() == 0) return fla;
@@ -766,12 +778,12 @@ namespace ufo
     Expr tmp = simpEquivClasses(hardVars, cnjs, fla->getFactory());
     tmp = simpleQE(tmp, qVars);
     if (doCore)
-      return coreQE(tmp, qVars);
+      return coreQE(tmp, qVars, doBool && doArithm);
     else
       return tmp;
   }
 
-  template<typename Range> static Expr eliminateQuantifiersRepl(Expr fla, Range& vars)
+  template<typename Range> static Expr eliminateQuantifiersRepl(Expr fla, const Range& vars)
   {
     ExprFactory &efac = fla->getFactory();
     SMTUtils u(efac);

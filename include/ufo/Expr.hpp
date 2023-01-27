@@ -228,7 +228,9 @@ namespace expr
 
     bool args_empty () const { return args.empty () ; }
     args_iterator args_begin () const { return args.begin (); }
+    args_iterator begin () const { return args.begin (); }
     args_iterator args_end () const { return args.end (); }
+    args_iterator end () const { return args.end (); }
 
     template <typename iterator>
     void renew_args (iterator b, iterator e);

@@ -5,6 +5,7 @@
 
 #include "ae/CVCAbduce.hpp"
 #include "utils/StdHash.hpp"
+#include "utils/PairHash.hpp"
 
 #ifdef HAVE_ARMADILLO
 #include "DataLearner.hpp"
@@ -112,8 +113,8 @@ namespace ufo
         bool checkedSrc = find(checked.begin(), checked.end(), hr.srcRelation) != checked.end();
         bool checkedDst = find(checked.begin(), checked.end(), hr.dstRelation) != checked.end();
         if ((hr.srcRelation == rel && hr.dstRelation == rel) ||
-            (hr.srcRelation == rel && checkedDst) ||
-            (hr.dstRelation == rel && checkedSrc) ||
+            (hr.srcRelation == rel/* && checkedDst*/) ||
+            (hr.dstRelation == rel/* && checkedSrc*/) ||
             (checkedSrc && checkedDst) ||
             (hr.isFact && checkedDst))
         {
@@ -1128,6 +1129,17 @@ namespace ufo
         }
         else if (printLog >= 3) outs () << "    CHC check succeeded\n";
       }
+
+      bool haveCand = false;
+      for (const auto& kv : candidates)
+        for (const auto& cand : kv.second)
+        {
+          haveCand = true;
+          break;
+        }
+      if (!haveCand)
+        return false;
+
       if (!recur) return false;
       if (res1) return anyProgress(worklist);
       else return multiHoudini(worklist);
@@ -1634,35 +1646,72 @@ namespace ufo
     // Output: K: Array, V: Full new range(s)
     typedef unordered_map<Expr,ExprVector> GetRangesRet;
     ExprUMap rngvars; // K: Type, V: Variable
-    unordered_map<ExprSet,GetRangesRet> _grvCache;
-    GetRangesRet getRangesVec(const ExprSet& range_arrs_set)
+    unordered_map<std::pair<Expr,ExprSet>,GetRangesRet> _grvCache;
+    GetRangesRet getRangesVec(const ExprSet& range_arrs_set, Expr inv)
     {
-      if (_grvCache.count(range_arrs_set) != 0)
-        return _grvCache.at(range_arrs_set);
+      int invNum = getVarIndex(inv, decls);
+      assert(invNum >= 0);
+      auto key = make_pair(inv, range_arrs_set);
+      if (_grvCache.count(key) != 0)
+        return _grvCache.at(key);
 
       GetRangesRet out;
 
       if (range_arrs_set.size() == 0)
       {
-        _grvCache[range_arrs_set] = out;
+        _grvCache[key] = out;
         return std::move(out);
       }
       ExprVector range_arrs(range_arrs_set.begin(), range_arrs_set.end());
 
       // Find the array the range is using
-      Expr loopbody, initbody, querybody;
+      Expr loopbody, initbody, querybody, initrel;
       ExprSet loopLocVars;
       for (const auto& chc : ruleManager.chcs)
       {
-        if (chc.isInductive)
+        if (chc.isInductive && chc.srcRelation == inv)
         {
+          if (loopbody)
+          {
+            cout << "Bootstrap: Multi-inductive CHCs not supported for "<<inv<<endl;
+            _grvCache[key] = out;
+            return std::move(out);
+          }
           loopbody = chc.body;
           loopLocVars.insert(chc.dstVars.begin(), chc.dstVars.end());
         }
-        else if (chc.isFact)
-          initbody = replaceAll(chc.body, chc.dstVars, invarVarsShort[0]);
-        else if (chc.isQuery)
-          querybody = getExists(chc.body, chc.locVars);
+        else if (chc.isFact && chc.dstRelation == inv)
+        {
+          if (initbody)
+          {
+            cout << "Bootstrap: Multi-init CHCs not supported for "<<inv<<endl;
+            _grvCache[key] = out;
+            return std::move(out);
+          }
+          initbody = replaceAll(chc.body, chc.dstVars, invarVarsShort[invNum]);
+        }
+        else if (chc.dstRelation == inv && chc.srcRelation != inv)
+        {
+          if (initbody)
+          {
+            cout << "Bootstrap: Multi-init CHCs not supported for "<<inv<<endl;
+            _grvCache[key] = out;
+            return std::move(out);
+          }
+          initbody = chc.body;
+          initrel = chc.srcRelation;
+        }
+        else if (chc.srcRelation == inv && chc.dstRelation != inv)
+        {
+          if (querybody)
+          {
+            cout << "Bootstrap: Multi-query CHCs not supported for "<<inv<<endl;
+            _grvCache[key] = out;
+            return std::move(out);
+          }
+          querybody = ufo::eliminateQuantifiers(chc.body, chc.dstVars);
+          querybody = getExists(querybody, chc.locVars);
+        }
       }
 
       if (alternver < 3)
@@ -1679,21 +1728,23 @@ namespace ufo
           if (alliters[i].size() > 1)
           {
             cout << "Bootstrap: altern-ver < 3 doesn't support multi-index accesses" << endl;
-            out[range_arrs[i]].push_back(NULL);
+            //out[range_arrs[i]].push_back(NULL);
             continue;
           }
+          if (alliters[i].size() == 0)
+            continue;
           Expr iter = (*alliters[i].begin())->right();
           Expr boundhi = iter, boundlo = iter;
           // Still need to find the minimum
           ExprVector itervars;
-          ExprUSet allunprimed(invarVarsShort[0].begin(),
-              invarVarsShort[0].end());
+          ExprUSet allunprimed(invarVarsShort[invNum].begin(),
+              invarVarsShort[invNum].end());
           filter(iter, [&](Expr e){return allunprimed.count(e) != 0;},
               inserter(itervars, itervars.begin()));
           if (itervars.size() > 1)
           {
             cout << "Bootstrap: altern-ver < 4 doesn't support multi-var indices" << endl;
-            out[range_arrs[i]].push_back(NULL);
+            //out[range_arrs[i]].push_back(NULL);
             continue;
           }
           Expr var = itervars[0];
@@ -1705,13 +1756,16 @@ namespace ufo
           if (isOpX<FALSE>(varlo_def))
           {
             cout << "Bootstrap: Failed to find definition for "<<var<<endl;
-            _grvCache[range_arrs_set] = out;
+            _grvCache[key] = out;
             return std::move(out);
           }
           // Assumes eliminateQuantifiers keeps the structure the same
           if (isOpX<AND>(varlo_def))
             varlo_def = varlo_def->last();
-          varlo_def = varlo_def->right();
+          if (isOpX<EQ>(varlo_def) && varlo_def->left() == tmpvar)
+            varlo_def = varlo_def->right();
+          else
+            varlo_def = var; // Non-deterministic variable
           boundlo = replaceAll(boundlo, var, varlo_def);
           boundlo = simplifyArithm(simplifyArithm(boundlo));
 
@@ -1723,7 +1777,7 @@ namespace ufo
 
           out[range_arrs[i]].push_back(mk<AND>(mk<GEQ>(qvar, boundlo), mk<LT>(qvar, boundhi)));
         }
-        _grvCache[range_arrs_set] = out;
+        _grvCache[key] = out;
         return std::move(out);
       }
 
@@ -1733,6 +1787,7 @@ namespace ufo
         [](Expr e, const ExprVector& v){return e;});
 
       ExprVector ranges(range_arrs.size());
+      ExprVector regranges(range_arrs.size());
       ExprVector constranges(range_arrs.size());
       for (const auto& loopbody : disjs)
       {
@@ -1750,10 +1805,11 @@ namespace ufo
             inserter(alliters_init[i], alliters_init[i].begin()));
         }
 
-        ExprSet allprimed(ruleManager.invVarsPrime[decls[0]].begin(),
-            ruleManager.invVarsPrime[decls[0]].end());
-        ExprSet allunprimed(invarVarsShort[0].begin(),
-            invarVarsShort[0].end());
+        ExprSet allprimed(ruleManager.invVarsPrime[inv].begin(),
+            ruleManager.invVarsPrime[inv].end());
+        ExprSet allunprimed(invarVarsShort[invNum].begin(),
+            invarVarsShort[invNum].end());
+        Expr noprimed_body = ufo::eliminateQuantifiers(loopbody, allprimed);
         for (int i = 0; i < alliters.size(); ++i)
         {
           if (alliters[i].size() == 0) continue;
@@ -1776,7 +1832,7 @@ namespace ufo
                 if (isOpX<FALSE>(def))
                 {
                   cout << "Bootstrap: Failed to find definition for "<<vp<<endl;
-                  _grvCache[range_arrs_set] = out;
+                  _grvCache[key] = out;
                   return std::move(out);
                 }
                 if (isOpX<AND>(def))
@@ -1816,7 +1872,7 @@ namespace ufo
             Expr boundlo = tmpiter, boundhi = tmpiter;
             for (const Expr& var : itervars)
             {
-              Expr varp = replaceAll(var, invarVarsShort[0], ruleManager.invVarsPrime[decls[0]]);
+              Expr varp = replaceAll(var, invarVarsShort[invNum], ruleManager.invVarsPrime[inv]);
               Expr tmpvar = mkConst(mkTerm<string>("tmpqevar", m_efac), typeOf(var));
               Expr tmpvar2 = mkConst(mkTerm<string>("tmpqevar2", m_efac), typeOf(var));
               ExprVector _qvars{varp};
@@ -1827,7 +1883,7 @@ namespace ufo
               if (isOpX<FALSE>(varp_def))
               {
                 cout<<"Bootstrap: Failed to find definition for "<<varp<<endl;
-                _grvCache[range_arrs_set] = out;
+                _grvCache[key] = out;
                 return std::move(out);
               }
               // Assumes eliminateQuantifiers keeps the structure the same
@@ -1849,7 +1905,7 @@ namespace ufo
               if (isOpX<FALSE>(varlo_def))
               {
                 cout << "Bootstrap: Failed to find definition for "<<var<<endl;
-                _grvCache[range_arrs_set] = out;
+                _grvCache[key] = out;
                 return std::move(out);
               }
               // Assumes eliminateQuantifiers keeps the structure the same
@@ -1877,10 +1933,31 @@ namespace ufo
               boundlo = replaceAll(boundlo, var, min);
               boundlo = simplifyArithm(simplifyArithm(boundlo));
 
+              /*if (!isOpX<AND>(varup_qe))
+                varup_qe = mk<AND>(varup_qe);
+              Expr varup_def = NULL;
+              for (const Expr& conj : *varup_qe)
+              {
+                if (isOpX<GEQ>(conj) && conj->left() == tmpvar)
+                {
+                  varup_def = conj->right();
+                  break;
+                }
+                else if (isOpX<LEQ>(conj) && conj->right() == tmpvar)
+                {
+                  varup_def = conj->left();
+                  break;
+                }
+              }
+              if (!varup_def)
+              {
+                cout << "Bootstrap: Unrecognized upper bound form: "<<varup_qe<<endl;
+                continue;
+              }
+              boundup = replaceAll(boundup, var, varup_def);
+              boundup = simplifyArithm(simplifyArithm(boundup));*/
               //_qvars.push_back(varp);
-              /*_qvars[0] = tmpvar;
-              Expr noprimed_body =
-                ufo::eliminateQuantifiers(loopbody, allprimed);*/
+              //_qvars[0] = tmpvar;
               /*Expr varup_def = ufo::eliminateQuantifiers(
                 mk<AND>(loopbody, mk<GT>(tmpvar, var)), _qvars);*/
               /*Expr varupabd = cvcAbduce(mk<GT>(tmpvar, var), noprimed_body);
@@ -1913,37 +1990,63 @@ namespace ufo
                 mkConst(mkTerm(string("rngvar"), arrtype->efac()), arrtype);
             Expr qvar = rngvars[range_arrs[i]];
 
+            Expr boundup = NULL;
+            boundup = ufo::eliminateQuantifiers(
+              mk<AND>(mkNeg(noprimed_body), querybody, mk<GEQ>(qvar, tmpiter)),
+              itervars);
+            if (!boundup || isOpX<FALSE>(boundup))
+              cout << "Bootstrap: Failed to find upper for "<<tmpiter<<endl;
+            boundup = mkNeg(boundup);
+
             Expr newrange =
               mk<AND>(mk<GT>(qvar, boundlo), mk<LT>(qvar, boundhi));
+            Expr lms = sfs[invNum].back().getAllLemmas();
             // TODO: Might not work for very finite cases
-            if (u.implies(sfs[0].back().getAllLemmas(), mk<LEQ>(boundlo, boundhi)))
+            if (u.implies(lms, mk<LEQ>(boundlo, boundhi)))
               newrange = mk<AND>(mk<GEQ>(qvar, boundlo), mk<LEQ>(qvar, boundhi));
-            else if (u.implies(sfs[0].back().getAllLemmas(), mk<LEQ>(boundhi, boundlo)))
-              newrange = mk<AND>(mk<GEQ>(qvar, boundhi), mk<LEQ>(qvar, boundlo));
-            else if (u.isSat(mk<AND>(sfs[0].back().getAllLemmas(), newrange)))
+            else if (u.implies(lms, mk<LEQ>(boundhi, boundlo)))
+            {
+              swap(boundhi, boundlo);
+              newrange = mk<AND>(mk<GEQ>(qvar, boundlo), mk<LEQ>(qvar, boundhi));
+            }
+            else if (u.isSat(mk<AND>(lms, newrange)))
               newrange = mk<AND>(mk<GEQ>(qvar, boundlo), mk<LEQ>(qvar, boundhi));
             else
             {
-              newrange = mk<AND>(mk<GT>(qvar, boundhi), mk<LT>(qvar, boundlo));
-              if (u.isSat(mk<AND>(sfs[0].back().getAllLemmas(), newrange)))
-                newrange = mk<AND>(mk<GEQ>(qvar, boundhi), mk<LEQ>(qvar, boundlo));
+              swap(boundhi, boundlo);
+              newrange = mk<AND>(mk<GT>(qvar, boundlo), mk<LT>(qvar, boundhi));
+              if (u.isSat(mk<AND>(lms, newrange)))
+                newrange = mk<AND>(mk<GEQ>(qvar, boundlo), mk<LEQ>(qvar, boundhi));
               else
               {
+                swap(boundhi, boundlo);
                 cout << "Bootstrap: Failed to order bounds: l=" << boundlo
                   << ", h=" << boundhi << endl;
                 newrange = mk<AND>(mk<GEQ>(qvar, boundlo), mk<LEQ>(qvar, boundhi));
               }
             }
+
             if (ranges[i])
               ranges[i] = mk<OR>(ranges[i], newrange);
             else
               ranges[i] = newrange;
 
-            if (hasconstarr)
+            if (boundup && (hasconstarr || invNumber > 1))
+            {
+              Expr newregrange =
+                mk<AND>(mk<GT>(qvar, boundhi), boundup);
+
+              if (regranges[i])
+                regranges[i] = mk<OR>(regranges[i], newregrange);
+              else
+                regranges[i] = newregrange;
+            }
+
+            /*if (hasconstarr)
               if (constranges[i])
                 constranges[i] = mk<OR>(constranges[i], mk<GT>(qvar, boundhi));
               else
-                constranges[i] = mk<GT>(qvar, boundhi);
+                constranges[i] = mk<GT>(qvar, boundhi);*/
           }
         }
       }
@@ -1952,19 +2055,21 @@ namespace ufo
       {
         if (ranges[i])
           out[range_arrs[i]].push_back(simplifyBool(simplifyArithm(ranges[i])));
-        if (constranges[i])
-          out[range_arrs[i]].push_back(simplifyBool(simplifyArithm(constranges[i])));
+        if (regranges[i])
+          out[range_arrs[i]].push_back(simplifyBool(simplifyArithm(regranges[i])));
+        /*if (constranges[i])
+          out[range_arrs[i]].push_back(simplifyBool(simplifyArithm(constranges[i])));*/
       }
 
-      _grvCache[range_arrs_set] = out;
+      _grvCache[key] = out;
       return std::move(out);
     }
 
-    GetRangesRet getRanges(Expr fullpost, Expr qvar)
+    GetRangesRet getRanges(Expr fullpost, Expr qvar, Expr inv)
     {
       ExprSet range_arrs = getArrsAccessed(fullpost, qvar);
 
-      auto out = getRangesVec(range_arrs);
+      auto out = getRangesVec(range_arrs, inv);
       for (auto& kv : out)
         for (Expr& rng : kv.second)
         {
@@ -1975,9 +2080,9 @@ namespace ufo
     }
 
     // For 'mutateAERanges'
-    Expr getSingleRange(Expr fullpost, Expr qvar)
+    Expr getSingleRange(Expr fullpost, Expr qvar, Expr inv)
     {
-      GetRangesRet out = getRanges(fullpost, qvar);
+      GetRangesRet out = getRanges(fullpost, qvar, inv);
       ExprSet iters_set;
       for (const auto &arr_ranges : out)
         for (const Expr& range : arr_ranges.second)
@@ -1995,6 +2100,7 @@ namespace ufo
       return NULL;
     }
 
+#if 0
     Expr mutateAERanges(Expr fullpost, Expr post, ExprUMap& qvars,
       unordered_map<Expr,int>& hasrange, bool negContext)
     {
@@ -2065,6 +2171,7 @@ namespace ufo
 
       return mknary(post->op(), newargs.begin(), newargs.end());
     }
+#endif
 
     std::pair<ExprVector,Expr> coverWithRange(Expr e, const GetRangesRet& ranges,
       Expr qvar, bool isneg = false)
@@ -2093,12 +2200,12 @@ namespace ufo
             return make_pair(ExprVector(), Expr(NULL));
         if (argret.second)
         {
-          if (foundsel && ranges.at(foundsel) != ranges.at(argret.second))
+          if (foundsel && ranges.count(foundsel) && ranges.count(argret.second) && ranges.at(foundsel) != ranges.at(argret.second))
           {
             outs() << "Bootstrap: Can't synthesize range for multi-array comparison" << endl;
             return make_pair(ExprVector(), Expr(NULL));
           }
-          else
+          if (ranges.count(argret.second) && !ranges.count(foundsel))
             foundsel = argret.second;
         }
         newargs.push_back(argret.first);
@@ -2136,9 +2243,9 @@ namespace ufo
       return make_pair(std::move(ret), foundsel);
     }
 
-    ExprVector synthAERange(Expr post, Expr qvar)
+    ExprVector synthAERange(Expr post, Expr qvar, Expr inv)
     {
-      return coverWithRange(post, getRanges(post, qvar), qvar).first;
+      return coverWithRange(post, getRanges(post, qvar, inv), qvar).first;
       /*vector<ExprVector> newargs;
       if (isLit(post) || isOpX<FDECL>(post))
         return ExprVector{post};
@@ -2180,21 +2287,18 @@ namespace ufo
     ExprVector generalizeArrQuery()
     {
       ExprVector ret(1);
-      if (ruleManager.decls.size() > 1)
-      {
-        if (printLog) outs() << "Bootstrap: More than one invariant currently unsupported";
-        return std::move(ret);
-      }
 
       Expr newpost = NULL;
       ExprVector loopbodies;
       const ExprVector *locvars = NULL;
       // Find query body and loops
+      Expr queryrel;
       for (const auto& chc : ruleManager.chcs)
         if (chc.isQuery)
         {
           newpost = chc.origbody;
           locvars = &chc.locVars;
+          queryrel = chc.srcRelation;
         }
         else if (chc.isInductive)
           loopbodies.push_back(chc.body);
@@ -2252,7 +2356,7 @@ namespace ufo
         }
         auto nextpos = pos; ++nextpos;
         //if (hasrange[pos->first] < 2)
-          for (const Expr& newe : synthAERange(e, *pos))
+          for (const Expr& newe : synthAERange(e, *pos, queryrel))
             perm(newe, nextpos);
         /*else
           return perm(e, nextpos);*/
@@ -2274,7 +2378,7 @@ namespace ufo
         orderedQVars(e->arg(i), qvars);
     }
 
-    ExprVector alternAddRanges(Expr cand)
+    ExprVector alternAddRanges(Expr cand, Expr inv)
     {
       //ExprUMap qvars;
       //unordered_map<Expr,int> hasrange;
@@ -2289,20 +2393,20 @@ namespace ufo
         if (pos == qvars.size())
           ret.push_back(e);
         else
-          for (const Expr& newe : synthAERange(e, qvars[pos]))
+          for (const Expr& newe : synthAERange(e, qvars[pos], inv))
             perm(newe, pos + 1);
       };
       perm(cand, 0);
       return std::move(ret);
     }
 
-    bool bootstrapCheckCand(Expr cand, bool isnewpost = false)
+    bool bootstrapCheckCand(Expr cand, int invNum, bool isnewpost = false)
     {
       if (printLog)
-        outs () << "- - - Bootstrapped cand for " << decls[0] << ": "
+        outs () << "- - - Bootstrapped cand for " << decls[invNum] << ": "
                 << cand << (printLog >= 3 ? " 😎\n" : "\n");
-      candidates[0].clear();
-      candidates[0].push_back(cand);
+      candidates[invNum].clear();
+      candidates[invNum].push_back(cand);
       if (multiHoudini(ruleManager.dwtoCHCs))
       {
         assignPrioritiesForLearned();
@@ -2315,24 +2419,24 @@ namespace ufo
         if (!isnewpost && alternver >= 5)
         {
           for (const Expr& np : newposts)
-            if (bootstrapCheckCand(np, true))
+            if (bootstrapCheckCand(np, queryInvNum, true))
               return true;
         }
       }
       return false;
     }
 
-    bool alternTryQuants(Expr cand)
+    bool alternTryQuants(Expr cand, int invNum)
     {
       ExprUSet qiters;
-      for (const auto qvptr : qvits[0])
+      for (const auto qvptr : qvits[invNum])
         qiters.insert(qvptr->qv);
       ExprVector qvs;
       filter(cand, [&](const Expr& e){return qiters.count(e) != 0;},
         inserter(qvs, qvs.end()));
       if (qvs.size() == 0)
       {
-        if (bootstrapCheckCand(cand))
+        if (bootstrapCheckCand(cand, invNum))
           return true;
         return false;
       }
@@ -2342,9 +2446,9 @@ namespace ufo
       {
         if (pos == qvs.size())
         {
-          for (const Expr& cand : alternAddRanges(e))
+          for (const Expr& cand : alternAddRanges(e, decls[invNum]))
           {
-            if (bootstrapCheckCand(cand))
+            if (bootstrapCheckCand(cand, invNum))
               return true;
           }
           return false;
@@ -2364,12 +2468,29 @@ namespace ufo
 
     bool alternGenDataCands()
     {
-      for (const Expr& cand : arrCands[0])
+      /*map<Expr,ExprSet> nonArrCands;
+      getDataCandidates(nonArrCands);
+      for (const auto& kv : nonArrCands)
       {
-        if (alternTryQuants(cand))
-          return true;
-        deferredCandidates[0].push_front(cand);
+        int invNum = getVarIndex(kv.first, decls);
+        assert(invNum >= 0);
+        candidates[invNum].clear();
+        candidates[invNum].insert(candidates[invNum].end(),
+          kv.second.begin(), kv.second.end());
       }
+      if (multiHoudini(ruleManager.dwtoCHCs))
+      {
+        assignPrioritiesForLearned();
+        if (checkAllLemmas())
+          return true;
+      }*/
+      for (int invNum = 0; invNum < arrCands.size(); ++invNum)
+        for (const Expr& cand : arrCands[invNum])
+        {
+          if (alternTryQuants(cand, invNum))
+            return true;
+          deferredCandidates[invNum].push_front(cand);
+        }
       return false;
     }
 
@@ -2511,7 +2632,7 @@ namespace ufo
           for (const Expr& newpost : newposts)
           {
             // Check
-            if (bootstrapCheckCand(newpost))
+            if (bootstrapCheckCand(newpost, queryInvNum, true))
               return true;
           }
         }
@@ -2520,65 +2641,68 @@ namespace ufo
 
         if (alternver >= 5 || alternver < 2)
           for (const Expr& newpost : newposts)
-            deferredCandidates[0].push_front(newpost);
+            deferredCandidates[queryInvNum].push_front(newpost);
 
         if (alternver >= 4)
         {
           //ExprVector bexprs = getBoolExprs();
-          ExprVector preconds(mbps[0].begin(), mbps[0].end());
-
-          Expr lms = sfs[0].back().getAllLemmas();
-          ExprVector implparts;
-          for (const Expr& defc : deferredCandidates[0])
+          for (int invNum = 0; invNum < invNumber; ++invNum)
           {
-            if (u.implies(lms, defc) || u.implies(lms, mk<NEG>(defc)))
-            {}
-            else
-              implparts.push_back(defc);
-          }
+            ExprVector preconds(mbps[invNum].begin(), mbps[invNum].end());
 
-          std::sort(implparts.begin(), implparts.end(),
-            [&](const Expr& l,const Expr& r){return u.implies(l, r);});
-
-          ExprVector permargs(2);
-          function<bool(int)> perm = [&] (int pos) -> bool
-          {
-            if (pos == permargs.size())
+            Expr lms = sfs[invNum].back().getAllLemmas();
+            ExprVector implparts;
+            for (const Expr& defc : deferredCandidates[invNum])
             {
-              if (permargs[0] == permargs[1])
-                return false;
-              Expr dcand = mknary<IMPL>(permargs.begin(),permargs.end());
-              /*if (u.isTrue(dcand) || u.isFalse(dcand))
-                return false;*/
-              if (alternTryQuants(dcand))
-                return true;
+              if (u.implies(lms, defc) || u.implies(lms, mk<NEG>(defc)))
+              {}
+              else
+                implparts.push_back(defc);
             }
-            /*else if (pos == 0)
+
+            std::sort(implparts.begin(), implparts.end(),
+              [&](const Expr& l,const Expr& r){return u.implies(l, r);});
+
+            ExprVector permargs(2);
+            function<bool(int)> perm = [&] (int pos) -> bool
             {
-              for (int i = 0; i < preconds.size(); ++i)
+              if (pos == permargs.size())
               {
-                const Expr& pre = preconds[i];
-                if (!pre)
-                  continue;
-                permargs[pos] = pre;
-                if (perm(pos + 1))
+                if (permargs[0] == permargs[1])
+                  return false;
+                Expr dcand = mknary<IMPL>(permargs.begin(),permargs.end());
+                /*if (u.isTrue(dcand) || u.isFalse(dcand))
+                  return false;*/
+                if (alternTryQuants(dcand, invNum))
                   return true;
               }
-            }*/
-            else
-              for (int i = 0; i < implparts.size(); ++i)
+              /*else if (pos == 0)
               {
-                const Expr& defc = implparts[i];
-                if (!defc)
-                  continue;
-                permargs[pos] = defc;
-                if (perm(pos + 1))
-                  return true;
-              }
-            return false;
-          };
-          if (perm(0))
-            return true;
+                for (int i = 0; i < preconds.size(); ++i)
+                {
+                  const Expr& pre = preconds[i];
+                  if (!pre)
+                    continue;
+                  permargs[pos] = pre;
+                  if (perm(pos + 1))
+                    return true;
+                }
+              }*/
+              else
+                for (int i = 0; i < implparts.size(); ++i)
+                {
+                  const Expr& defc = implparts[i];
+                  if (!defc)
+                    continue;
+                  permargs[pos] = defc;
+                  if (perm(pos + 1))
+                    return true;
+                }
+              return false;
+            };
+            if (perm(0))
+              return true;
+          }
         }
 
         if (alternver < 2)
@@ -2736,6 +2860,9 @@ namespace ufo
           exprs.insert(a);
         }
       }
+
+      /*if (!u.isSat(exprs))
+        return true;*/
 
       if (!hr.isQuery)
       {

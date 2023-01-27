@@ -1218,8 +1218,8 @@ namespace ufo
     return reBuildCmp(exp, l, r);
   }
 
-  static Expr simplifyArithmDisjunctions(Expr fla, bool keepRedundandDisj);
-  static Expr simplifyArithmConjunctions(Expr fla, bool keepRedundandConj);
+  static Expr simplifyArithmDisjunctions(Expr fla, bool keepRedundandDisj = false, bool simplify = true);
+  static Expr simplifyArithmConjunctions(Expr fla, bool keepRedundandConj = false, bool simplify = true);
 
   struct SimplifyArithmExpr
   {
@@ -3116,7 +3116,7 @@ namespace ufo
   }
 
   // similar to simplifyArithmDisjunctions
-  inline static Expr simplifyArithmConjunctions(Expr fla, bool keep_redundand = false)
+  static Expr simplifyArithmConjunctions(Expr fla, bool keep_redundand, bool simplify)
   {
     ExprFactory& efac = fla->getFactory();
     ExprSet cnjs, newCnjs;
@@ -3132,9 +3132,10 @@ namespace ufo
         continue;
       }
 
-      Expr tmp = simplifyArithm(
-        reBuildCmp(d, mk<PLUS>(d->arg(0), additiveInverse(d->arg(1))),
-                   mkMPZ (0, efac)));
+      Expr tmp = reBuildCmp(d, mk<PLUS>(d->arg(0), additiveInverse(d->arg(1))),
+                   mkMPZ (0, efac));
+      if (simplify)
+        tmp = simplifyArithm(tmp);
       tmp = ineqReverter(tmp);
 
       if (isOpX<TRUE>(tmp)) continue;
@@ -3359,7 +3360,7 @@ namespace ufo
   }
 
   // symmetric to simplifyArithmConjunctions
-  inline static Expr simplifyArithmDisjunctions(Expr fla, bool keep_redundand = false)
+  static Expr simplifyArithmDisjunctions(Expr fla, bool keep_redundand, bool simplify)
   {
     ExprFactory& efac = fla->getFactory();
     ExprSet dsjs, newDsjs;
@@ -3377,8 +3378,9 @@ namespace ufo
         continue;
       }
 
-      Expr tmp = simplifyArithm(
-          reBuildCmp(d, mk<PLUS>(d->arg(0), additiveInverse(d->arg(1))), mkMPZ (0, efac)));
+      Expr tmp = reBuildCmp(d, mk<PLUS>(d->arg(0), additiveInverse(d->arg(1))), mkMPZ (0, efac));
+      if (simplify)
+        tmp = simplifyArithm(tmp);
 
       if (isOpX<TRUE>(tmp)) return tmp;
       if (isOpX<FALSE>(tmp)) continue;
