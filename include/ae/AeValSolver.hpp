@@ -57,6 +57,8 @@ namespace ufo
     debug(0),
     simplify(_simplify)
     {
+      /*if (containsOp<SELECT>(t) || containsOp<STORE>(t))
+        t = rewriteSelectStore(t);*/
       filter (boolop::land(s,t), bind::IsConst (), back_inserter (stVars));
       getConj(t, tConjs);
       for (auto &exp: v) {
@@ -741,7 +743,7 @@ namespace ufo
   inline static Expr coreQE(Expr fla, const Range& vars, bool simplify = true)
   {
     if (!emptyIntersect(fla, vars) &&
-        !containsOp<FORALL>(fla) && !containsOp<EXISTS>(fla) && !qeUnsupported(fla))
+        !containsOp<FORALL>(fla) && !containsOp<EXISTS>(fla)/* && !qeUnsupported(fla)*/)
     {
       AeValSolver ae(mk<TRUE>(fla->getFactory()), fla, vars, simplify); // exists quantified . formula
       if (ae.solve()) return ae.getValidSubset(true);

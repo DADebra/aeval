@@ -2835,6 +2835,37 @@ namespace ufo
     return dagVisit (a, exp);
   }
 
+  struct SelectRemover
+  {
+    Expr operator() (const Expr &exp)
+    {
+      if (isOpX<FDECL>(exp) && exp->arity() == 2 && isOpX<ARRAY_TY>(exp->last()))
+      {
+        Expr arrtype = exp->last();
+        ExprVector newargs(3);
+        newargs[0] = exp->left();
+        newargs[1] = arrtype->left();
+        newargs[2] = arrtype->right();
+        return mknary<FDECL>(newargs);
+      }
+      if (isOpX<SELECT>(exp) && isOpX<FAPP>(exp->left()))
+      {
+        Expr vardecl = exp->left()->left();
+        if (!isOpX<ARRAY_TY>(vardecl->last()))
+          return mk<FAPP>(vardecl, exp->right());
+      }
+      return exp;
+    }
+  };
+
+  inline Expr removeSelects(Expr exp)
+  {
+    if (containsOp<STORE>(exp) || !containsOp<SELECT>(exp))
+      return exp;
+    RW<SelectRemover> a(new SelectRemover());
+    return dagVisit (a, exp);
+  }
+
   struct QuantifiedVarsFilter : public std::unary_function<Expr, VisitAction>
   {
     ExprSet& vars;
@@ -4660,6 +4691,41 @@ namespace ufo
     if (isOpX<ITE>(a2))
       return isSameArray(a1, a2->arg(1)) && isSameArray(a1, a2->arg(2));
     return false;
+  }
+
+  // Removes given variables from exp. Not quantifier elimination.
+  template <typename Range>
+  Expr removeVars(const Expr &exp, const Range& vars)
+  {
+    if (vars.size() == 0)
+      return exp;
+    if (find(vars.begin(), vars.end(), exp) != vars.end())
+      return NULL;
+    if (exp->arity() == 0 || isOpX<FDECL>(exp) || IsConst()(exp))
+      return exp;
+    ExprVector newargs;
+    //Expr expType = typeOf(exp);
+    for (int i = 0; i < exp->arity(); ++i)
+    {
+      const Expr& argi = exp->arg(i);
+      Expr na = removeVars(argi, vars);
+      if (na)
+      {
+        newargs.push_back(na);
+        continue;
+      }
+      if (isOpX<IMPL>(exp) && i == 0)
+        return NULL;
+      if (isOp<BoolOp>(exp))
+        continue;
+      return NULL;
+    }
+    if (newargs.size() > 1)
+      return mknary(exp->op(), newargs.begin(), newargs.end());
+    else if (newargs.size() == 1)
+      return newargs[0];
+    else
+      return NULL;
   }
 
   void pprint(Expr exp, int inden, bool upper);
