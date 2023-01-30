@@ -1,0 +1,209 @@
+Standard settings: --v3 --attempts 0 --to 1500 --no-save-lemmas
+Timeout: 300
+Freqhorn: ../build/tools/deep/freqhorn
+Thu Oct 13 12:56:10 EDT 2022
+check_equal_set_flag_0.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 Int)(_FH_inv_3 Int)(_FH_inv_4 Int)) Bool
+  (=> (and (>= _FH_inv_4 0) (= (+ _FH_inv_3 (- 1)) 0)) (exists ((k Int)) (distinct (select _FH_inv_0 k) (select _FH_inv_1 k)))))
+real 0.17
+user 0.17
+sys 0.00
+collect_indices_equal_values_2.smt2
+unknown
+real 0.21
+user 0.21
+sys 0.00
+collect_indices_equal_values_3.smt2
+unknown
+real 0.22
+user 0.20
+sys 0.01
+copy_cust0.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 Int)(_FH_inv_3 Int)) Bool
+  (forall ((j1 Int)) (=> (and (>= j1 0) (< (+ j1 (- _FH_inv_2)) 0)) (exists ((i2 Int)) (= (select _FH_inv_1 j1) (select _FH_inv_0 i2))))))
+real 0.13
+user 0.13
+sys 0.00
+copy_nonzero_1.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 Int)(_FH_inv_3 Int)(_FH_inv_4 Int)) Bool
+  (forall ((k Int)) (exists ((l Int)) (=> (and (>= k 0) (>= _FH_inv_4 0) (< (+ k (- _FH_inv_3)) 0)) (= (select _FH_inv_0 k) (select _FH_inv_1 l))))))
+real 0.22
+user 0.21
+sys 0.01
+copy_positive_1.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 Int)(_FH_inv_3 Int)(_FH_inv_4 Int)) Bool
+  (forall ((k Int)) (exists ((l Int)) (=> (and (>= k 0) (>= _FH_inv_4 0) (< (+ k (- _FH_inv_3)) 0)) (= (select _FH_inv_0 k) (select _FH_inv_1 l))))))
+real 0.21
+user 0.21
+sys 0.00
+cust_exists.smt2
+unable lit: (exists (INT) [&&    j1>=0    (select(_FH_inv_0, j1)+(-_FH_inv_2))=0    (j1+(-_FH_inv_3))<0])
+freqhorn: /home/darin/aeval/include/ae/ExprSimpl.hpp:4598: void ufo::getLiterals(expr::Expr, expr::ExprSet&, bool): Assertion `0' failed.
+./runboot_ablative.sh: line 20: 2824852 Aborted                 timeout "$to" "$freqhorn" --altern-ver "$alternver" $stdsettings "$benchpath"
+real 0.10
+user 0.10
+sys 0.00
+cust_init_add.smt2
+unknown
+real 0.11
+user 0.11
+sys 0.00
+cust_map.smt2
+unknown
+real 0.31
+user 0.31
+sys 0.00
+cust_mod.smt2
+unknown
+real 0.14
+user 0.13
+sys 0.01
+cust_swap.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))) Bool
+  (forall ((j2 Int)) (exists ((i2 Int)) (= (select _FH_inv_0 i2) (select _FH_inv_1 j2)))))
+real 0.11
+user 0.10
+sys 0.00
+find1_2.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 Int)(_FH_inv_2 Int)(_FH_inv_3 Int)(_FH_inv_4 Int)) Bool
+  (or (=> (and (>= _FH_inv_4 0) (distinct (+ _FH_inv_2 (- _FH_inv_4)) 0)) (exists ((pos Int)) (= (select _FH_inv_0 pos) _FH_inv_3))) (and (= (+ _FH_inv_2 (- _FH_inv_4)) 0) (< (+ _FH_inv_1 (- _FH_inv_4)) 0))))
+real 0.21
+user 0.21
+sys 0.00
+find1_3.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 Int)(_FH_inv_2 Int)(_FH_inv_3 Int)(_FH_inv_4 Int)) Bool
+  (or (exists ((pos Int)) (= (select _FH_inv_0 pos) _FH_inv_3)) (>= (+ _FH_inv_2 (- _FH_inv_4)) 0) (and (< (+ _FH_inv_1 (- _FH_inv_4)) 0) (= (+ _FH_inv_2 (- _FH_inv_4)) 0))))
+real 0.20
+user 0.19
+sys 0.02
+find_max_1.smt2
+unknown
+real 0.18
+user 0.18
+sys 0.00
+find_max_from_second_1.smt2
+unknown
+real 0.19
+user 0.19
+sys 0.00
+find_max_local_0.smt2
+unknown
+real 0.34
+user 0.34
+sys 0.00
+find_max_local_1.smt2
+unknown
+real 0.34
+user 0.33
+sys 0.01
+find_max_up_to_1.smt2
+unknown
+real 0.18
+user 0.17
+sys 0.01
+find_min_1.smt2
+unknown
+real 0.19
+user 0.18
+sys 0.00
+find_min_local_0.smt2
+unknown
+real 0.34
+user 0.33
+sys 0.01
+find_min_local_1.smt2
+unknown
+real 0.34
+user 0.33
+sys 0.01
+find_min_up_to_1.smt2
+unknown
+real 0.18
+user 0.18
+sys 0.00
+merge_interleave_2.smt2
+unknown
+real 0.14
+user 0.13
+sys 0.01
+partition-harder_0.smt2
+unknown
+real 0.29
+user 0.28
+sys 0.01
+partition-harder_1.smt2
+unknown
+real 0.30
+user 0.29
+sys 0.01
+partition-harder_2.smt2
+unknown
+real 0.29
+user 0.29
+sys 0.00
+partition-harder_3.smt2
+unknown
+real 0.29
+user 0.28
+sys 0.01
+partition-harder_4.smt2
+unknown
+real 0.31
+user 0.30
+sys 0.00
+partition-harder_cust0.smt2
+unknown
+real 0.30
+user 0.29
+sys 0.01
+partition_2.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 (Array Int Int))(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)(_FH_inv_6 Int)) Bool
+  (forall ((pos Int)) (=> (and (>= pos 0) (< (+ pos (- _FH_inv_5)) 0) (>= _FH_inv_4 0)) (exists ((pos2 Int)) (= (select _FH_inv_1 pos) (select _FH_inv_0 pos2))))))
+real 0.30
+user 0.29
+sys 0.02
+partition_3.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 (Array Int Int))(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)(_FH_inv_6 Int)) Bool
+  (forall ((pos Int)) (=> (and (>= pos 0) (>= _FH_inv_4 0) (< (+ pos (- _FH_inv_6)) 0)) (exists ((pos2 Int)) (= (select _FH_inv_2 pos) (select _FH_inv_0 pos2))))))
+real 0.31
+user 0.29
+sys 0.02
+partition_4.smt2
+unknown
+real 0.29
+user 0.28
+sys 0.01
+partition_5.smt2
+unknown
+real 0.29
+user 0.27
+sys 0.01
+partition_6.smt2
+unknown
+real 0.32
+user 0.31
+sys 0.01
+str_len_0.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 Int)) Bool
+  (=> (exists ((pos Int)) (and (= (select _FH_inv_0 pos) 0) (>= pos 0))) (forall ((j Int)) (=> (and (>= j 0) (< (+ j (- _FH_inv_1)) 0)) (distinct (select _FH_inv_0 j) 0)))))
+real 0.11
+user 0.11
+sys 0.00
+swap_cust0.smt2
+unable lit: (forall (INT) (((j1>=0)&&((j1+(-_FH_inv_3))<0))->(exists (INT) (select(_FH_inv_0, j1)=select(_FH_inv_1, __loc_var_0)))))
+freqhorn: /home/darin/aeval/include/ae/ExprSimpl.hpp:4598: void ufo::getLiterals(expr::Expr, expr::ExprSet&, bool): Assertion `0' failed.
+./runboot_ablative.sh: line 20: 2825154 Aborted                 timeout "$to" "$freqhorn" --altern-ver "$alternver" $stdsettings "$benchpath"
+real 0.11
+user 0.09
+sys 0.02
+Thu Oct 13 12:56:19 EDT 2022

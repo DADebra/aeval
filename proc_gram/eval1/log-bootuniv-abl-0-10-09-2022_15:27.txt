@@ -1,0 +1,2374 @@
+Standard settings: --v3 --debug --maxrecdepth 1 --gen_method newtrav --trav_type striped --trav_priority sfs --attempts 0 --to 1500 --no-save-lemmas --inv-templ 0
+Timeout: 300
+Freqhorn: ../build/tools/deep/freqhorn
+Sun Oct  9 15:27:59 EDT 2022
+array_copy.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    i1>=_FH_inv_3    select(_FH_inv_0, i1)=select(_FH_inv_1, i1)])
+
+SAMPLING
+========
+unknown
+real 0.13
+user 0.12
+sys 0.00
+array_copy_increment.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    select(_FH_inv_0, i1)<select(_FH_inv_1, i1)    i1>=_FH_inv_3])
+
+SAMPLING
+========
+unknown
+real 0.13
+user 0.12
+sys 0.01
+array_copy_increment_ind.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    i1>=_FH_inv_2    select(_FH_inv_0, i1)<select(_FH_inv_1, i1)])
+Added lemma for inv: (forall (INT) [||    i1<=0    (i1+(-_FH_inv_2))>=0    (select(_FH_inv_0, i1)+(-select(_FH_inv_1, i1)))<0])
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 Int)) Bool
+  (forall ((i1 Int)) (or (<= i1 0) (>= (+ i1 (- _FH_inv_2)) 0) (< (+ (select _FH_inv_0 i1) (- (select _FH_inv_1 i1))) 0))))
+real 0.12
+user 0.11
+sys 0.00
+array_copy_ind.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    i1>=_FH_inv_2    select(_FH_inv_0, i1)=select(_FH_inv_1, i1)])
+Added lemma for inv: (forall (INT) [||    i1<=0    (i1+(-_FH_inv_2))>=0    (select(_FH_inv_0, i1)+(-select(_FH_inv_1, i1)))=0])
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 Int)) Bool
+  (forall ((i1 Int)) (or (<= i1 0) (>= (+ i1 (- _FH_inv_2)) 0) (= (+ (select _FH_inv_0 i1) (- (select _FH_inv_1 i1))) 0))))
+real 0.12
+user 0.12
+sys 0.00
+array_copy_inverse.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -1 (type INT) 1 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    i1>=_FH_inv_3    select(_FH_inv_0, i1)=select(_FH_inv_1, [+    _FH_inv_3    -i1    -1])])
+
+SAMPLING
+========
+unknown
+real 0.15
+user 0.15
+sys 0.00
+array_copy_inverse_easier.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -1 (type INT) 1 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    i1>=_FH_inv_3    select(_FH_inv_0, [+    _FH_inv_3    -i1    -1])=select(_FH_inv_1, i1)])
+
+SAMPLING
+========
+unknown
+real 0.14
+user 0.14
+sys 0.00
+array_copy_sum.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    i1>=_FH_inv_4    (select(_FH_inv_0, i1)+select(_FH_inv_1, i1))=select(_FH_inv_2, i1)])
+
+SAMPLING
+========
+unknown
+real 0.18
+user 0.17
+sys 0.01
+array_copy_sum_ind.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    i1>=_FH_inv_3    (select(_FH_inv_0, i1)+select(_FH_inv_1, i1))=select(_FH_inv_2, i1)])
+Added lemma for inv: (forall (INT) [||    i1<=0    (i1+(-_FH_inv_3))>=0    [+    select(_FH_inv_0, i1)    select(_FH_inv_1, i1)    -select(_FH_inv_2, i1)]=0])
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 (Array Int Int))(_FH_inv_3 Int)) Bool
+  (forall ((i1 Int)) (or (<= i1 0) (>= (+ i1 (- _FH_inv_3)) 0) (= (+ (select _FH_inv_0 i1) (select _FH_inv_1 i1) (- (select _FH_inv_2 i1))) 0))))
+real 0.13
+user 0.12
+sys 0.01
+array_doub_access_init.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 2 (type INT) -2 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    select(_FH_inv_0, i1)>=0    i1>(2*_FH_inv_2)])
+
+SAMPLING
+========
+unknown
+real 0.13
+user 0.12
+sys 0.00
+array_doub_access_init_const.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 2 (type INT) -2 (type INT) 100000 (type INT) -100000 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    select(_FH_inv_0, i1)>=0    i1>(2*_FH_inv_2)])
+
+SAMPLING
+========
+unknown
+real 0.14
+user 0.12
+sys 0.01
+array_even_odd_1.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 2 (type INT) -2 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    i1>=_FH_inv_4    select(_FH_inv_0, i1)=(select(_FH_inv_1, i1)+select(_FH_inv_2, i1))])
+
+SAMPLING
+========
+unknown
+real 0.29
+user 0.28
+sys 0.01
+array_even_odd_2.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 2 (type INT) -2 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    i1>=_FH_inv_4    (select(_FH_inv_0, i1)+(-select(_FH_inv_1, i1)))=0    (select(_FH_inv_0, i1)+(-select(_FH_inv_2, i1)))=0])
+
+SAMPLING
+========
+unknown
+real 0.30
+user 0.30
+sys 0.00
+array_find.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    i1<0    select(_FH_inv_0, i1)!=_FH_inv_2    i1>=_FH_inv_1    ((select(_FH_inv_0, _FH_inv_1)+(-_FH_inv_2))!=0)&&((_FH_inv_1+(-_FH_inv_3))<0)])
+
+SAMPLING
+========
+unknown
+real 0.13
+user 0.13
+sys 0.00
+array_fixed_range_01.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 3 (type INT) -3 (type INT) 2 (type INT) -2 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (select(_FH_inv_0, 3)>=0)
+
+SAMPLING
+========
+unknown
+real 0.15
+user 0.16
+sys 0.00
+array_fixed_range_02.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (select(_FH_inv_0, _FH_inv_4)>=0)
+
+SAMPLING
+========
+unknown
+real 0.71
+user 0.72
+sys 0.01
+array_index_compl.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (_FH_inv_1>=0)
+
+SAMPLING
+========
+unknown
+real 0.10
+user 0.10
+sys 0.00
+array_init_add.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    fail    i1<0    i1>=_FH_inv_2    (select(_FH_inv_0, i1)+(-i1))=0])
+
+SAMPLING
+========
+unknown
+real 0.12
+user 0.11
+sys 0.00
+array_init_add_three.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    fail    i1<0    i1>=_FH_inv_4    select(_FH_inv_0, i1)>0])
+
+SAMPLING
+========
+unknown
+real 0.19
+user 0.18
+sys 0.01
+array_init_add_two.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    fail    i1<0    i1>=_FH_inv_3    select(_FH_inv_0, i1)>=0])
+
+SAMPLING
+========
+unknown
+real 0.13
+user 0.12
+sys 0.00
+array_init_batches.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 2 (type INT) -2 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    i1>=_FH_inv_2    select(_FH_inv_0, i1)=0])
+
+SAMPLING
+========
+unknown
+real 0.13
+user 0.12
+sys 0.00
+array_init_batches_const.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 2 (type INT) -2 (type INT) 1 (type INT) -1 (type INT) 100000 (type INT) -100000 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    select(_FH_inv_0, i1)=0    i1>=_FH_inv_2])
+
+SAMPLING
+========
+unknown
+real 0.14
+user 0.13
+sys 0.00
+array_init_batches_ind.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 2 (type INT) -2 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    i1>=_FH_inv_1    select(_FH_inv_0, i1)=0])
+Added lemma for inv: (forall (INT) [||    select(_FH_inv_0, i1)=0    i1<=0    (i1+(-_FH_inv_1))>=0])
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 Int)) Bool
+  (forall ((i1 Int)) (or (= (select _FH_inv_0 i1) 0) (<= i1 0) (>= (+ i1 (- _FH_inv_1)) 0))))
+real 0.12
+user 0.11
+sys 0.01
+array_init_both_ends.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    i1>=_FH_inv_2    _FH_inv_2=(select(_FH_inv_0, i1)+select(_FH_inv_0, _FH_inv_2+(-i1)))])
+
+SAMPLING
+========
+unknown
+real 0.12
+user 0.10
+sys 0.01
+array_init_both_ends2.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    i1>=_FH_inv_2    _FH_inv_2=(select(_FH_inv_0, i1)+select(_FH_inv_0, _FH_inv_2+(-i1)))])
+
+SAMPLING
+========
+unknown
+real 0.12
+user 0.11
+sys 0.01
+array_init_both_ends_simpl.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    i1>=_FH_inv_2    _FH_inv_2=(select(_FH_inv_0, i1)+select(_FH_inv_0, _FH_inv_2+(-i1)))])
+
+SAMPLING
+========
+unknown
+real 0.16
+user 0.16
+sys 0.00
+array_init_both_ends_simpl_const.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 100000 (type INT) -100000 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    i1>=_FH_inv_2    _FH_inv_2=(select(_FH_inv_0, i1)+select(_FH_inv_0, _FH_inv_2+(-i1)))])
+
+SAMPLING
+========
+unknown
+real 0.18
+user 0.16
+sys 0.01
+array_init_const.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    select(_FH_inv_0, i1)=1    i1>=_FH_inv_2])
+
+SAMPLING
+========
+unknown
+real 0.11
+user 0.11
+sys 0.00
+array_init_const_const.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 100000 (type INT) -100000 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    i1>=_FH_inv_2    select(_FH_inv_0, i1)=1])
+
+SAMPLING
+========
+unknown
+real 0.12
+user 0.11
+sys 0.01
+array_init_const_ind.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    i1>=_FH_inv_1    select(_FH_inv_0, i1)=1])
+Added lemma for inv: (forall (INT) [||    select(_FH_inv_0, i1)=1    i1<=0    (i1+(-_FH_inv_1))>=0])
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 Int)) Bool
+  (forall ((i1 Int)) (or (= (select _FH_inv_0 i1) 1) (<= i1 0) (>= (+ i1 (- _FH_inv_1)) 0))))
+real 0.11
+user 0.10
+sys 0.01
+array_init_depend.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -1 (type INT) 1 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    select(_FH_inv_0, i1)=_FH_inv_2    i1>=_FH_inv_3])
+
+SAMPLING
+========
+unknown
+real 0.16
+user 0.16
+sys 0.01
+array_init_depend_incr.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) -1 (type INT) 1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    i1>=_FH_inv_3    select(_FH_inv_0, i1)=(_FH_inv_2+i1)])
+
+SAMPLING
+========
+unknown
+real 0.17
+user 0.16
+sys 0.00
+array_init_disj.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 2 (type INT) -2 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    select(_FH_inv_0, i1)!=1    i1>=_FH_inv_2])
+
+SAMPLING
+========
+unknown
+real 0.13
+user 0.12
+sys 0.01
+array_init_disj_const.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 2 (type INT) -2 (type INT) 100000 (type INT) -100000 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    select(_FH_inv_0, i1)!=1    i1>=_FH_inv_2])
+
+SAMPLING
+========
+unknown
+real 0.14
+user 0.13
+sys 0.01
+array_init_double.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    i1>=_FH_inv_3    _FH_inv_3=(select(_FH_inv_0, i1)+select(_FH_inv_1, i1))])
+
+SAMPLING
+========
+unknown
+real 0.14
+user 0.13
+sys 0.00
+array_init_double_const.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 777777 (type INT) -777777 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    i1>=_FH_inv_3    _FH_inv_3=(select(_FH_inv_0, i1)+select(_FH_inv_1, i1))])
+
+SAMPLING
+========
+unknown
+real 0.16
+user 0.15
+sys 0.01
+array_init_drop.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -1 (type INT) 1 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    select(_FH_inv_0, i1)<=i1    i1>=_FH_inv_2])
+
+SAMPLING
+========
+unknown
+real 0.20
+user 0.19
+sys 0.01
+array_init_ite.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    i1>=_FH_inv_2    select(_FH_inv_0, i1)=i1])
+
+SAMPLING
+========
+unknown
+real 0.90
+user 0.90
+sys 0.03
+array_init_ite_dupl.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -1 (type INT) 1 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    i1>=_FH_inv_3    select(_FH_inv_0, i1)=_FH_inv_2])
+
+SAMPLING
+========
+unknown
+real 0.30
+user 0.29
+sys 0.01
+array_init_ite_jump.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 7 (type INT) -7 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    i1>_FH_inv_3    select(_FH_inv_0, i1)!=_FH_inv_2])
+
+SAMPLING
+========
+unknown
+real 0.16
+user 0.15
+sys 0.01
+array_init_ite_jump_const.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 100000 (type INT) -100000 (type INT) 7 (type INT) -7 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    select(_FH_inv_0, i1)!=_FH_inv_2    i1>_FH_inv_3])
+
+SAMPLING
+========
+unknown
+real 0.17
+user 0.16
+sys 0.01
+array_init_ite_jump_two.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 10 (type INT) -10 (type INT) 1 (type INT) -1 (type INT) 13 (type INT) -13 (type INT) 7 (type INT) -7 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    i1>_FH_inv_4    ((select(_FH_inv_0, i1)+(-_FH_inv_2))!=0)&&((select(_FH_inv_0, i1)+(-_FH_inv_3))!=0)])
+
+SAMPLING
+========
+unknown
+real 0.34
+user 0.33
+sys 0.01
+array_init_ite_jump_two_const.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 10 (type INT) -10 (type INT) 1 (type INT) -1 (type INT) 100000 (type INT) -100000 (type INT) 13 (type INT) -13 (type INT) 7 (type INT) -7 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    i1>_FH_inv_4    ((select(_FH_inv_0, i1)+(-_FH_inv_2))!=0)&&((select(_FH_inv_0, i1)+(-_FH_inv_3))!=0)])
+
+SAMPLING
+========
+unknown
+real 0.36
+user 0.35
+sys 0.01
+array_init_monot_ind.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -1 (type INT) 1 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 2 (type INT) -2 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    i1>=_FH_inv_1    select(_FH_inv_0, i1+-1)<select(_FH_inv_0, i1)])
+
+SAMPLING
+========
+unknown
+real 0.18
+user 0.17
+sys 0.01
+array_init_nondet_var_mult.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 0 (type INT) 0 (type INT) 1 (type INT) -1 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    select(_FH_inv_0, i1)>=i1    i1>=_FH_inv_3])
+
+SAMPLING
+========
+unknown
+real 0.12
+user 0.10
+sys 0.02
+array_init_nondet_vars.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 2 (type INT) -2 (type INT) 0 (type INT) 0 (type INT) 1 (type INT) -1 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    i1>=_FH_inv_3    select(_FH_inv_0, i1)>=(i1+2)])
+
+SAMPLING
+========
+unknown
+real 0.14
+user 0.13
+sys 0.00
+array_init_nondet_vars2.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 0 (type INT) 0 (type INT) 1 (type INT) -1 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    select(_FH_inv_0, i1)<i1    i1>=_FH_inv_4])
+
+SAMPLING
+========
+unknown
+real 0.14
+user 0.13
+sys 0.00
+array_init_reverse.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -1 (type INT) 1 (type INT) 0 (type INT) 0 (type INT) 1 (type INT) -1 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    i1>=_FH_inv_2    select(_FH_inv_0, i1)=1])
+
+SAMPLING
+========
+unknown
+real 0.11
+user 0.10
+sys 0.01
+array_init_reverse_const.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -1 (type INT) 1 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 99999 (type INT) -99999 (type INT) 100000 (type INT) -100000 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    i1>=_FH_inv_2    select(_FH_inv_0, i1)=1])
+
+SAMPLING
+========
+unknown
+real 0.12
+user 0.11
+sys 0.00
+array_init_select.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    i1>=_FH_inv_3    select(_FH_inv_0, i1)>=0])
+
+SAMPLING
+========
+unknown
+real 0.16
+user 0.15
+sys 0.00
+array_init_select_copy.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -1 (type INT) 1 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    select(_FH_inv_0, i1)>=0    i1>=_FH_inv_3])
+
+SAMPLING
+========
+unknown
+real 0.25
+user 0.24
+sys 0.01
+array_init_tuples.smt2
+
+INITIALIZE PREDICATE inv1
+====================
+extract_consts found: 3 (type INT) -3 (type INT) 4 (type INT) -4 (type INT) 5 (type INT) -5 (type INT) 1 (type INT) -1 (type INT) 6 (type INT) -6 (type INT) 2 (type INT) -2 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv1
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv1: (forall (INT) [||    0>i1    select(_FH_inv1_0, i1)>=0    i1>=_FH_inv1_2])
+
+SAMPLING
+========
+unknown
+real 198.94
+user 198.16
+sys 0.76
+array_init_tuples_relative.smt2
+
+INITIALIZE PREDICATE inv1
+====================
+extract_consts found: 4 (type INT) -4 (type INT) 3 (type INT) -3 (type INT) 2 (type INT) -2 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv1
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv1: (forall (INT) [||    0>i1    i1>=_FH_inv1_6    select(_FH_inv1_0, i1)>=0])
+
+SAMPLING
+========
+unknown
+real 39.11
+user 38.91
+sys 0.20
+array_init_upto_nondet.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    i1>=_FH_inv_3    i1>=_FH_inv_2    select(_FH_inv_0, i1)=i1])
+
+SAMPLING
+========
+unknown
+real 0.17
+user 0.17
+sys 0.00
+array_init_var.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    select(_FH_inv_0, i1)=i1    i1>=_FH_inv_2])
+
+SAMPLING
+========
+unknown
+real 0.11
+user 0.10
+sys 0.02
+array_init_var_ind.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    select(_FH_inv_0, i1)=i1    i1>=_FH_inv_1])
+Added lemma for inv: (forall (INT) [||    i1<=0    (select(_FH_inv_0, i1)+(-i1))=0    (i1+(-_FH_inv_1))>=0])
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 Int)) Bool
+  (forall ((i1 Int)) (or (<= i1 0) (= (+ (select _FH_inv_0 i1) (- i1)) 0) (>= (+ i1 (- _FH_inv_1)) 0))))
+real 0.11
+user 0.10
+sys 0.01
+array_init_var_plus.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    i1>=_FH_inv_1    select(_FH_inv_0, i1)>=0])
+
+SAMPLING
+========
+unknown
+real 0.13
+user 0.12
+sys 0.00
+array_init_var_plus_ind.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    select(_FH_inv_0, i1)>=0    i1>=_FH_inv_1])
+
+SAMPLING
+========
+unknown
+real 0.12
+user 0.12
+sys 0.00
+array_init_var_plus_ind2.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    i1>=_FH_inv_1    select(_FH_inv_0, i1)>=_FH_inv_3])
+
+SAMPLING
+========
+unknown
+real 0.14
+user 0.13
+sys 0.01
+array_init_var_plus_ind3.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 3 (type INT) -3 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    3>=i1    0>=select(_FH_inv_0, i1)    i1>=_FH_inv_1])
+
+SAMPLING
+========
+unknown
+real 0.12
+user 0.10
+sys 0.01
+array_min.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    i1>=_FH_inv_3    _FH_inv_2<=select(_FH_inv_0, i1)])
+
+SAMPLING
+========
+unknown
+real 0.17
+user 0.16
+sys 0.01
+array_min_const.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 10000 (type INT) -10000 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    i1>=_FH_inv_3    _FH_inv_2<=select(_FH_inv_0, i1)])
+
+SAMPLING
+========
+unknown
+real 0.19
+user 0.18
+sys 0.01
+array_min_ind.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    i1>=_FH_inv_1    _FH_inv_2<=select(_FH_inv_0, i1)])
+Added lemma for inv: (forall (INT) [||    i1<=0    (i1+(-_FH_inv_1))>=0    (_FH_inv_2+(-select(_FH_inv_0, i1)))<=0])
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 Int)(_FH_inv_2 Int)) Bool
+  (forall ((i1 Int)) (or (<= i1 0) (>= (+ i1 (- _FH_inv_1)) 0) (<= (+ _FH_inv_2 (- (select _FH_inv_0 i1))) 0))))
+real 0.17
+user 0.16
+sys 0.01
+array_min_max.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    _FH_inv_3<=_FH_inv_2    i1>=_FH_inv_4])
+Added lemma for inv: (forall (INT) [||    i1<=0    (_FH_inv_3+(-_FH_inv_2))<=0    (i1+(-_FH_inv_4))>=0])
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 Int)(_FH_inv_2 Int)(_FH_inv_3 Int)(_FH_inv_4 Int)) Bool
+  (forall ((i1 Int)) (or (<= i1 0) (<= (+ _FH_inv_3 (- _FH_inv_2)) 0) (>= (+ i1 (- _FH_inv_4)) 0))))
+real 0.36
+user 0.35
+sys 0.01
+array_min_max_const.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 100000 (type INT) -100000 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    i1>=_FH_inv_4    _FH_inv_3<=_FH_inv_2])
+Added lemma for inv: (forall (INT) [||    i1<=0    (i1+(-_FH_inv_4))>=0    (_FH_inv_3+(-_FH_inv_2))<=0])
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 Int)(_FH_inv_2 Int)(_FH_inv_3 Int)(_FH_inv_4 Int)) Bool
+  (forall ((i1 Int)) (or (<= i1 0) (>= (+ i1 (- _FH_inv_4)) 0) (<= (+ _FH_inv_3 (- _FH_inv_2)) 0))))
+real 0.36
+user 0.36
+sys 0.00
+array_min_swap.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) -1 (type INT) 1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    i1>=_FH_inv_3    _FH_inv_1>=i1    select(_FH_inv_0, _FH_inv_1)<=select(_FH_inv_0, i1)])
+
+SAMPLING
+========
+unknown
+real 0.21
+user 0.20
+sys 0.01
+array_min_swap_and_shift.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) -1 (type INT) 1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    i1>=_FH_inv_4    _FH_inv_1>=i1    select(_FH_inv_0, _FH_inv_1)<select(_FH_inv_0, i1)])
+
+SAMPLING
+========
+unknown
+real 0.24
+user 0.23
+sys 0.02
+array_min_swap_const.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) -1 (type INT) 1 (type INT) 0 (type INT) 0 (type INT) 100000 (type INT) -100000 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    i1>=_FH_inv_3    _FH_inv_1>=i1    select(_FH_inv_0, _FH_inv_1)<=select(_FH_inv_0, i1)])
+
+SAMPLING
+========
+unknown
+real 0.22
+user 0.21
+sys 0.01
+array_nonlin_init_depend.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -1 (type INT) 1 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    i1>=_FH_inv_4    select(_FH_inv_0, i1)=(_FH_inv_2+(i1*_FH_inv_3))])
+
+SAMPLING
+========
+unknown
+real 0.23
+user 0.22
+sys 0.01
+array_nonlin_init_mult.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    select(_FH_inv_0, i1)>=0    i1>=_FH_inv_2])
+
+SAMPLING
+========
+unknown
+real 0.12
+user 0.12
+sys 0.00
+array_nonlin_square.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    i1>=_FH_inv_2    select(_FH_inv_0, i1)>=0])
+
+SAMPLING
+========
+unknown
+real 0.11
+user 0.12
+sys 0.00
+array_partial_init.smt2
+
+INITIALIZE PREDICATE inv1
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv1
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv1: (forall (INT) [||    0>i1    select(_FH_inv1_2, i1)>=i1    i1>=_FH_inv1_5])
+
+SAMPLING
+========
+unknown
+real 0.81
+user 0.79
+sys 0.02
+array_password_naive.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    select(_FH_inv_0, _FH_inv_2)!=select(_FH_inv_1, _FH_inv_2)    i1>=_FH_inv_2    select(_FH_inv_0, i1)=select(_FH_inv_1, i1)])
+Added lemma for inv: (forall (INT) [||    i1<0    (select(_FH_inv_0, _FH_inv_2)+(-select(_FH_inv_1, _FH_inv_2)))<0    (select(_FH_inv_0, _FH_inv_2)+(-select(_FH_inv_1, _FH_inv_2)))>0    (i1+(-_FH_inv_2))>=0    (select(_FH_inv_0, i1)+(-select(_FH_inv_1, i1)))=0])
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 Int)(_FH_inv_3 Int)) Bool
+  (forall ((i1 Int)) (or (< i1 0) (< (+ (select _FH_inv_0 _FH_inv_2) (- (select _FH_inv_1 _FH_inv_2))) 0) (> (+ (select _FH_inv_0 _FH_inv_2) (- (select _FH_inv_1 _FH_inv_2))) 0) (>= (+ i1 (- _FH_inv_2)) 0) (= (+ (select _FH_inv_0 i1) (- (select _FH_inv_1 i1))) 0))))
+real 0.14
+user 0.13
+sys 0.01
+array_password_standard.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    1!=_FH_inv_3    i1>=_FH_inv_4    select(_FH_inv_0, i1)=select(_FH_inv_1, i1)])
+
+SAMPLING
+========
+unknown
+real 0.18
+user 0.17
+sys 0.01
+array_single_elem.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 143 (type INT) -143 (type INT) 1 (type INT) -1 (type INT) 150 (type INT) -150 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (select(_FH_inv_0, 143)=0)
+
+SAMPLING
+========
+unknown
+real 0.13
+user 0.12
+sys 0.01
+array_single_elem_const.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 143 (type INT) -143 (type INT) 100000 (type INT) -100000 (type INT) 0 (type INT) 0 (type INT) 150 (type INT) -150 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (select(_FH_inv_0, 143)=0)
+
+SAMPLING
+========
+unknown
+real 0.15
+user 0.14
+sys 0.01
+array_single_elem_increm.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (select(_FH_inv_0, 0)>=0)
+Added lemma for inv: (select(_FH_inv_0, 0)>=0)
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))) Bool
+  (>= (select _FH_inv_0 0) 0))
+real 0.08
+user 0.07
+sys 0.00
+array_split_01.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 500 (type INT) -500 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    500>i1    i1>=_FH_inv_3    i1=select(_FH_inv_1, i1)])
+
+SAMPLING
+========
+unknown
+real 0.17
+user 0.16
+sys 0.01
+array_split_02.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 2 (type INT) -2 (type INT) 50 (type INT) -50 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    50>=i1    i1>=_FH_inv_2    select(_FH_inv_0, i1)>i1])
+
+SAMPLING
+========
+unknown
+real 0.14
+user 0.13
+sys 0.00
+array_split_03.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 2 (type INT) -2 (type INT) 100 (type INT) -100 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    i1<0    i1>=_FH_inv_2    select(_FH_inv_0, i1)=select(_FH_inv_0, i1+_FH_inv_2)])
+
+SAMPLING
+========
+unknown
+real 0.16
+user 0.16
+sys 0.00
+array_split_04.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -1 (type INT) 1 (type INT) 10 (type INT) -10 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    10>i1    i1>=_FH_inv_2    select(_FH_inv_0, i1)<=0])
+
+SAMPLING
+========
+unknown
+real 0.20
+user 0.19
+sys 0.02
+array_split_05.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -1 (type INT) 1 (type INT) 2 (type INT) -2 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    i1>=_FH_inv_2    (select(_FH_inv_0, i1)+select(_FH_inv_0, _FH_inv_2+i1))=0])
+
+SAMPLING
+========
+unknown
+real 0.15
+user 0.13
+sys 0.01
+array_split_06.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 10 (type INT) -10 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    10>i1    i1>=_FH_inv_2    select(_FH_inv_0, i1)=10])
+
+SAMPLING
+========
+unknown
+real 0.14
+user 0.14
+sys 0.00
+array_split_07.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 100 (type INT) -100 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    100>i1    i1>=_FH_inv_4    select(_FH_inv_1, i1)=select(_FH_inv_2, i1)])
+
+SAMPLING
+========
+unknown
+real 0.20
+user 0.19
+sys 0.01
+array_split_08.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 99 (type INT) -99 (type INT) -1 (type INT) 1 (type INT) 100 (type INT) -100 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    100>i1    99=select(_FH_inv_1, i1)    i1>=_FH_inv_3])
+
+SAMPLING
+========
+unknown
+real 0.20
+user 0.19
+sys 0.01
+array_split_09.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 0 (type INT) 0 (type INT) -1 (type INT) 1 (type INT) 9 (type INT) -9 (type INT) 10 (type INT) -10 (type INT) 1 (type INT) -1 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    10>i1    i1>=_FH_inv_4    9=select(_FH_inv_2, i1)])
+
+SAMPLING
+========
+unknown
+real 0.71
+user 0.69
+sys 0.02
+array_split_10.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 50 (type INT) -50 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    50>i1    i1>=_FH_inv_3    0=select(_FH_inv_0, i1)])
+
+SAMPLING
+========
+unknown
+real 0.19
+user 0.18
+sys 0.01
+array_split_11.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -1 (type INT) 1 (type INT) 1 (type INT) -1 (type INT) 2 (type INT) -2 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (select(_FH_inv_1, 0)<=select(_FH_inv_1, (2*_FH_inv_5)+-1))
+
+SAMPLING
+========
+unknown
+real 3.91
+user 3.87
+sys 0.05
+array_split_12.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 2 (type INT) -2 (type INT) 1 (type INT) -1 (type INT) -1 (type INT) 1 (type INT) 500 (type INT) -500 (type INT) 0 (type INT) 0 (type INT) 1000 (type INT) -1000 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    500>i1    i1>=_FH_inv_3    (2*i1)=select(_FH_inv_0, i1)])
+
+SAMPLING
+========
+unknown
+real 0.18
+user 0.15
+sys 0.03
+array_split_13.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -2 (type INT) 2 (type INT) 50 (type INT) -50 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 150 (type INT) -150 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    50>=i1    i1=select(_FH_inv_0, i1)    i1>=_FH_inv_3])
+
+SAMPLING
+========
+unknown
+real 0.18
+user 0.17
+sys 0.01
+array_split_14.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -1 (type INT) 1 (type INT) 55 (type INT) -55 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 54 (type INT) -54 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    55>=i1    i1>=_FH_inv_3    _FH_inv_1<select(_FH_inv_0, i1)])
+
+SAMPLING
+========
+unknown
+real 0.22
+user 0.22
+sys 0.01
+array_split_15.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 11 (type INT) -11 (type INT) 100 (type INT) -100 (type INT) 10 (type INT) -10 (type INT) -1 (type INT) 1 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    11>=i1    select(_FH_inv_0, i1)=100    i1>=_FH_inv_2])
+
+SAMPLING
+========
+unknown
+real 0.21
+user 0.21
+sys 0.00
+array_split_16.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 100 (type INT) -100 (type INT) 10 (type INT) -10 (type INT) 0 (type INT) 0 (type INT) -1 (type INT) 1 (type INT) 1 (type INT) -1 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    10>i1    i1>=_FH_inv_2    select(_FH_inv_0, i1)=100])
+
+SAMPLING
+========
+unknown
+real 0.16
+user 0.14
+sys 0.02
+array_split_17.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) -1 (type INT) 1 (type INT) 2 (type INT) -2 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    (select(_FH_inv_0, i1)+select(_FH_inv_0, i1+1))=0    i1>=((2*_FH_inv_2)+-1)])
+
+SAMPLING
+========
+unknown
+real 0.15
+user 0.15
+sys 0.00
+array_split_18.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 500 (type INT) -500 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    500>i1    i1>=_FH_inv_6    select(_FH_inv_3, i1)=[+    select(_FH_inv_0, i1)    select(_FH_inv_1, i1)    select(_FH_inv_2, i1)]])
+
+SAMPLING
+========
+unknown
+real 1.45
+user 1.45
+sys 0.00
+array_split_19.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 500 (type INT) -500 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    500>i1    i1>=_FH_inv_5    select(_FH_inv_2, i1)=(select(_FH_inv_0, i1)+select(_FH_inv_1, i1))])
+
+SAMPLING
+========
+unknown
+real 0.28
+user 0.27
+sys 0.01
+array_split_20.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -1 (type INT) 1 (type INT) 2 (type INT) -2 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    _FH_inv_4>i1    i1>=(2*_FH_inv_4)    select(_FH_inv_0, i1)=(select(_FH_inv_1, i1)+select(_FH_inv_2, i1))])
+
+SAMPLING
+========
+unknown
+real 38.86
+user 38.68
+sys 0.16
+array_split_21.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -1 (type INT) 1 (type INT) 2 (type INT) -2 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    _FH_inv_3>i1    i1>=(2*_FH_inv_3)    select(_FH_inv_1, i1)=select(_FH_inv_0, i1)])
+
+SAMPLING
+========
+unknown
+real 3.35
+user 3.32
+sys 0.03
+array_standard_partition.smt2
+
+INITIALIZE PREDICATE inv1
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv1
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv1: (forall (INT) [||    0>i1    0>=select(_FH_inv1_1, i1)    i1>=_FH_inv1_4])
+Added lemma for inv1: (forall (INT) [||    i1<0    select(_FH_inv1_1, i1)<=0    (i1+(-_FH_inv1_4))>=0])
+Success after bootstrapping
+(define-fun inv1 ((_FH_inv1_0 (Array Int Int))(_FH_inv1_1 (Array Int Int))(_FH_inv1_2 Int)(_FH_inv1_3 Int)(_FH_inv1_4 Int)) Bool
+  (forall ((i1 Int)) (or (< i1 0) (<= (select _FH_inv1_1 i1) 0) (>= (+ i1 (- _FH_inv1_4)) 0))))
+real 0.19
+user 0.19
+sys 0.00
+array_standard_password.smt2
+
+INITIALIZE PREDICATE inv1
+====================
+extract_consts found: -1 (type INT) 1 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv1
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv1: (forall (INT) [||    0>i1    select(_FH_inv1_0, i1)=select(_FH_inv1_1, i1)    i1>=(_FH_inv1_2+-1)])
+
+SAMPLING
+========
+unknown
+real 0.23
+user 0.22
+sys 0.00
+array_tiling_pnr2.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -2 (type INT) 2 (type INT) 2 (type INT) -2 (type INT) 10 (type INT) -10 (type INT) -1 (type INT) 1 (type INT) 0 (type INT) 0 (type INT) 1 (type INT) -1 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    i1>=(2*_FH_inv_2)    select(_FH_inv_0, i1)!=0])
+
+SAMPLING
+========
+unknown
+real 0.25
+user 0.24
+sys 0.01
+array_tiling_pnr3.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -3 (type INT) 3 (type INT) 3 (type INT) -3 (type INT) -1 (type INT) 1 (type INT) 10 (type INT) -10 (type INT) 0 (type INT) 0 (type INT) -2 (type INT) 2 (type INT) 1 (type INT) -1 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    i1>=(3*_FH_inv_2)    select(_FH_inv_0, i1)!=_FH_inv_3])
+
+SAMPLING
+========
+unknown
+real 0.99
+user 0.97
+sys 0.02
+array_tiling_pnr4.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -1 (type INT) 1 (type INT) -3 (type INT) 3 (type INT) -4 (type INT) 4 (type INT) 4 (type INT) -4 (type INT) 10 (type INT) -10 (type INT) -2 (type INT) 2 (type INT) 0 (type INT) 0 (type INT) 1 (type INT) -1 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    select(_FH_inv_0, i1)!=_FH_inv_3    i1>=(4*_FH_inv_2)])
+
+SAMPLING
+========
+unknown
+real 8.05
+user 7.99
+sys 0.06
+array_tiling_pnr5.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -1 (type INT) 1 (type INT) -4 (type INT) 4 (type INT) -5 (type INT) 5 (type INT) -2 (type INT) 2 (type INT) 10 (type INT) -10 (type INT) 0 (type INT) 0 (type INT) -3 (type INT) 3 (type INT) 5 (type INT) -5 (type INT) 1 (type INT) -1 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    select(_FH_inv_0, i1)!=_FH_inv_3    i1>=(5*_FH_inv_2)])
+
+SAMPLING
+========
+unknown
+real 87.40
+user 87.00
+sys 0.40
+array_tiling_poly1.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    select(_FH_inv_0, i1)=(i1*i1)    i1>=_FH_inv_2])
+
+SAMPLING
+========
+unknown
+real 0.12
+user 0.11
+sys 0.01
+array_tiling_poly3.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -1 (type INT) 1 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    select(_FH_inv_0, i1)<(i1*i1)    i1>=_FH_inv_2])
+
+SAMPLING
+========
+unknown
+real 0.12
+user 0.11
+sys 0.01
+array_tiling_poly5.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -1 (type INT) 1 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    select(_FH_inv_0, i1)<(i1*i1)    i1>=_FH_inv_2])
+
+SAMPLING
+========
+unknown
+real 0.12
+user 0.11
+sys 0.01
+array_tiling_pr2.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -1 (type INT) 1 (type INT) -2 (type INT) 2 (type INT) 2 (type INT) -2 (type INT) 0 (type INT) 0 (type INT) 3 (type INT) -3 (type INT) 1 (type INT) -1 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    i1>=(2*_FH_inv_2)    select(_FH_inv_0, i1)=0    (_FH_inv_5+(-select(_FH_inv_0, i1)))<=0])
+
+SAMPLING
+========
+unknown
+real 0.44
+user 0.43
+sys 0.01
+array_tiling_pr3.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -1 (type INT) 1 (type INT) 0 (type INT) 0 (type INT) 7 (type INT) -7 (type INT) -3 (type INT) 3 (type INT) 3 (type INT) -3 (type INT) -2 (type INT) 2 (type INT) 1 (type INT) -1 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    i1>=(3*_FH_inv_2)    select(_FH_inv_0, i1)=0    (_FH_inv_6+(-select(_FH_inv_0, i1)))<=0])
+
+SAMPLING
+========
+unknown
+real 3.64
+user 3.61
+sys 0.04
+array_tiling_pr4.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -2 (type INT) 2 (type INT) -4 (type INT) 4 (type INT) -3 (type INT) 3 (type INT) 4 (type INT) -4 (type INT) 0 (type INT) 0 (type INT) -1 (type INT) 1 (type INT) 5 (type INT) -5 (type INT) 7 (type INT) -7 (type INT) 3 (type INT) -3 (type INT) 1 (type INT) -1 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    select(_FH_inv_0, i1)=0    i1>=(4*_FH_inv_2)    (_FH_inv_7+(-select(_FH_inv_0, i1)))<=0])
+
+SAMPLING
+========
+unknown
+real 86.52
+user 86.14
+sys 0.38
+array_tiling_pr5.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -4 (type INT) 4 (type INT) -5 (type INT) 5 (type INT) 0 (type INT) 0 (type INT) -3 (type INT) 3 (type INT) 2 (type INT) -2 (type INT) -2 (type INT) 2 (type INT) 5 (type INT) -5 (type INT) -1 (type INT) 1 (type INT) 7 (type INT) -7 (type INT) 3 (type INT) -3 (type INT) 1 (type INT) -1 (type INT) 
+real 300.18
+user 298.60
+sys 1.58
+array_tiling_rew.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -1 (type INT) 1 (type INT) 1 (type INT) -1 (type INT) 2 (type INT) -2 (type INT) 3 (type INT) -3 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    _FH_inv_5<=select(_FH_inv_0, i1)    i1>=_FH_inv_2])
+
+SAMPLING
+========
+unknown
+real 0.25
+user 0.25
+sys 0.00
+array_tiling_rewnif.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -1 (type INT) 1 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    i1<=select(_FH_inv_0, i1)    i1>=_FH_inv_2])
+
+SAMPLING
+========
+unknown
+real 0.16
+user 0.16
+sys 0.00
+array_tiling_rewnifrev.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -2 (type INT) 2 (type INT) 0 (type INT) 0 (type INT) -1 (type INT) 1 (type INT) 1 (type INT) -1 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    i1>=_FH_inv_2    i1<=select(_FH_inv_0, i1)])
+
+SAMPLING
+========
+unknown
+real 0.15
+user 0.14
+sys 0.00
+array_tiling_rewnifrev2.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 0 (type INT) 0 (type INT) -2 (type INT) 2 (type INT) -1 (type INT) 1 (type INT) 1 (type INT) -1 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    i1<=select(_FH_inv_0, i1)    i1>=_FH_inv_2])
+
+SAMPLING
+========
+unknown
+real 0.13
+user 0.12
+sys 0.01
+array_tiling_rewrev.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 0 (type INT) 0 (type INT) -1 (type INT) 1 (type INT) -2 (type INT) 2 (type INT) 1 (type INT) -1 (type INT) 2 (type INT) -2 (type INT) 3 (type INT) -3 (type INT) 7 (type INT) -7 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    i1>=_FH_inv_2    _FH_inv_5<=select(_FH_inv_0, i1)])
+
+SAMPLING
+========
+unknown
+real 0.26
+user 0.25
+sys 0.01
+array_tiling_skipped.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 2 (type INT) -2 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    select(_FH_inv_0, i1)<=i1    i1>=(2*_FH_inv_2)])
+
+SAMPLING
+========
+unknown
+real 0.21
+user 0.20
+sys 0.01
+array_tiling_tcpy.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -1 (type INT) 1 (type INT) 2 (type INT) -2 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    i1>=(2*_FH_inv_3)    select(_FH_inv_1, i1)=select(_FH_inv_0, i1)])
+
+SAMPLING
+========
+unknown
+real 0.68
+user 0.67
+sys 0.01
+array_tiling_tcpy2.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 3 (type INT) -3 (type INT) 4 (type INT) -4 (type INT) 5 (type INT) -5 (type INT) 1 (type INT) -1 (type INT) 2 (type INT) -2 (type INT) -1 (type INT) 1 (type INT) 0 (type INT) 0 (type INT) 
+real 300.15
+user 298.65
+sys 1.47
+array_tiling_tcpy3.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 3 (type INT) -3 (type INT) 4 (type INT) -4 (type INT) 1 (type INT) -1 (type INT) 2 (type INT) -2 (type INT) -1 (type INT) 1 (type INT) 0 (type INT) 0 (type INT) 
+real 300.21
+user 298.53
+sys 1.66
+array_tripl_access_init.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 1 (type INT) -1 (type INT) 3 (type INT) -3 (type INT) 2 (type INT) -2 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    i1>(3*_FH_inv_2)    select(_FH_inv_0, i1)>=0])
+
+SAMPLING
+========
+unknown
+real 0.23
+user 0.23
+sys 0.00
+array_tripl_access_init_const.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 2 (type INT) -2 (type INT) 1 (type INT) -1 (type INT) 3 (type INT) -3 (type INT) 100000 (type INT) -100000 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    select(_FH_inv_0, i1)>=0    i1>(3*_FH_inv_2)])
+
+SAMPLING
+========
+unknown
+real 0.24
+user 0.22
+sys 0.01
+array_two_counters_init_const.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -1 (type INT) 1 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    i1>=_FH_inv_4    select(_FH_inv_0, i1)=select(_FH_inv_1, i1)    (_FH_inv_3>=0)&&((_FH_inv_2+(-_FH_inv_4))<0)])
+
+SAMPLING
+========
+unknown
+real 0.28
+user 0.26
+sys 0.01
+array_two_counters_init_var.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -1 (type INT) 1 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    i1>=_FH_inv_4    (_FH_inv_3>=0)&&((_FH_inv_2+(-_FH_inv_4))<0)    select(_FH_inv_0, i1)=select(_FH_inv_1, i1)])
+
+SAMPLING
+========
+unknown
+real 0.28
+user 0.27
+sys 0.00
+array_two_counters_max_subtr.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -1 (type INT) 1 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>=i1    _FH_inv_3>=select(_FH_inv_0, i1)    i1>=_FH_inv_4    (_FH_inv_2>=0)&&((_FH_inv_1+(-_FH_inv_4))<0)])
+
+SAMPLING
+========
+unknown
+real 0.36
+user 0.36
+sys 0.00
+array_two_counters_min_max.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -1 (type INT) 1 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: ((_FH_inv_3>=_FH_inv_4)||((_FH_inv_2>=0)&&((_FH_inv_1+(-_FH_inv_5))<0)))
+
+SAMPLING
+========
+unknown
+real 2.25
+user 2.26
+sys 0.02
+array_two_counters_min_max_prog.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: -1 (type INT) 1 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+real 300.21
+user 298.39
+sys 1.83
+array_two_counters_replace.smt2
+
+INITIALIZE PREDICATE inv
+====================
+extract_consts found: 3 (type INT) -3 (type INT) 5 (type INT) -5 (type INT) -1 (type INT) 1 (type INT) 1 (type INT) -1 (type INT) 0 (type INT) 0 (type INT) 
+
+SEED MINING for inv
+===========
+
+BOOTSTRAPPING
+=============
+- - - Bootstrapped cand for inv: (forall (INT) [||    0>i1    (select(_FH_inv_0, i1)!=0)&&(select(_FH_inv_0, i1)!=1)    i1>=_FH_inv_3    (_FH_inv_2>=0)&&((_FH_inv_1+(-_FH_inv_3))<0)])
+
+SAMPLING
+========
+unknown
+real 0.51
+user 0.49
+sys 0.02
+Sun Oct  9 15:56:18 EDT 2022

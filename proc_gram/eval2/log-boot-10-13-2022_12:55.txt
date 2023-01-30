@@ -1,0 +1,246 @@
+Thu Oct 13 12:55:57 EDT 2022
+Standard settings: --v3 --altern-ver 9 --attempts 0 --to 1500 --no-save-lemmas
+Timeout: 300
+Freqhorn: ../build/tools/deep/freqhorn
+array_altern_check_equal_set_flag_0.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 Int)(_FH_inv_3 Int)(_FH_inv_4 Int)) Bool
+  (and (>= _FH_inv_3 0) (>= (+ _FH_inv_2 (* (- 1) _FH_inv_3)) 0) (=> (and (>= _FH_inv_4 0) (= (+ _FH_inv_3 (- 1)) 0)) (exists ((k Int)) (and (>= k 0) (<= (+ k (- _FH_inv_2)) (- 1)) (distinct (+ (select _FH_inv_0 k) (- (select _FH_inv_1 k))) 0))))))
+real 0.23
+user 0.22
+sys 0.00
+array_altern_collect_indices_equal_values_2.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 (Array Int Int))(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)) Bool
+  (and (>= _FH_inv_5 0) (>= (+ _FH_inv_3 (* (- 1) _FH_inv_5)) 0) (forall ((pos Int)) (=> (and (>= pos 0) (= (+ (select _FH_inv_0 pos) (- (select _FH_inv_1 pos))) 0) (>= _FH_inv_4 0) (< (+ pos (- _FH_inv_4)) 0) (<= (+ pos (- _FH_inv_3)) (- 1))) (exists ((pos2 Int)) (and (>= pos2 0) (<= (+ pos2 (- _FH_inv_5)) (- 1)) (= (+ (select _FH_inv_2 pos2) (- pos)) 0)))))))
+real 0.31
+user 0.30
+sys 0.00
+array_altern_collect_indices_equal_values_3.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 (Array Int Int))(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)) Bool
+  (and (>= _FH_inv_5 0) (>= (+ _FH_inv_3 (* (- 1) _FH_inv_5)) 0) (forall ((pos Int)) (=> (and (>= pos 0) (>= _FH_inv_4 0) (< (+ pos (- _FH_inv_4)) 0) (= (+ (select _FH_inv_0 pos) (- (select _FH_inv_1 pos))) 0) (<= (+ pos (- _FH_inv_3)) (- 1))) (exists ((pos2 Int)) (and (>= pos2 0) (<= (+ pos2 (- _FH_inv_5)) (- 1)) (= (+ (select _FH_inv_2 pos2) (- pos)) 0)))))))
+real 0.31
+user 0.31
+sys 0.00
+array_altern_copy_cust0.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 Int)(_FH_inv_3 Int)) Bool
+  (and (>= _FH_inv_2 0) (forall ((j1 Int)) (=> (and (>= j1 0) (<= (+ j1 (- _FH_inv_2)) (- 1))) (exists ((i2 Int)) (and (>= i2 0) (<= (+ i2 (- _FH_inv_2)) (- 1)) (= (+ (select _FH_inv_1 j1) (- (select _FH_inv_0 i2))) 0)))))))
+real 0.15
+user 0.14
+sys 0.01
+array_altern_copy_nonzero_1.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 Int)(_FH_inv_3 Int)(_FH_inv_4 Int)) Bool
+  (and (>= _FH_inv_3 0) (>= (+ _FH_inv_2 (* (- 1) _FH_inv_3)) 0) (forall ((k Int)) (exists ((l Int)) (=> (and (>= k 0) (>= _FH_inv_4 0) (<= (+ k (- _FH_inv_3)) (- 1))) (and (= (+ (select _FH_inv_0 k) (- (select _FH_inv_1 l))) 0) (>= l 0) (<= (+ l (- _FH_inv_2)) (- 1))))))))
+real 0.27
+user 0.26
+sys 0.01
+array_altern_copy_positive_1.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 Int)(_FH_inv_3 Int)(_FH_inv_4 Int)) Bool
+  (and (>= _FH_inv_3 0) (>= (+ _FH_inv_2 (* (- 1) _FH_inv_3)) 0) (forall ((k Int)) (exists ((l Int)) (=> (and (>= k 0) (>= _FH_inv_4 0) (<= (+ k (- _FH_inv_3)) (- 1))) (and (= (+ (select _FH_inv_0 k) (- (select _FH_inv_1 l))) 0) (>= l 0) (<= (+ l (- _FH_inv_2)) (- 1))))))))
+real 0.26
+user 0.26
+sys 0.00
+array_altern_cust_exists.smt2
+unable lit: (exists (INT) [&&    j1>=0    (select(_FH_inv_0, j1)+(-_FH_inv_2))=0    (j1+(-_FH_inv_3))<0])
+freqhorn: /home/darin/aeval/include/ae/ExprSimpl.hpp:4598: void ufo::getLiterals(expr::Expr, expr::ExprSet&, bool): Assertion `0' failed.
+./runboot.sh: line 27: 2824466 Aborted                 timeout "$to" "$freqhorn" $stdsettings "$benchpath"
+real 0.10
+user 0.08
+sys 0.01
+array_altern_cust_init_add.smt2
+unknown
+real 1.66
+user 1.64
+sys 0.02
+array_altern_cust_map.smt2
+unknown
+real 0.41
+user 0.39
+sys 0.01
+array_altern_cust_mod.smt2
+unknown
+real 0.16
+user 0.16
+sys 0.00
+array_altern_cust_swap.smt2
+unknown
+real 0.10
+user 0.09
+sys 0.00
+array_altern_find1_2.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 Int)(_FH_inv_2 Int)(_FH_inv_3 Int)(_FH_inv_4 Int)) Bool
+  (and (>= _FH_inv_1 0) (>= (+ _FH_inv_4 (* (- 1) _FH_inv_2)) 0) (=> (and (>= _FH_inv_4 0) (distinct (+ _FH_inv_2 (- _FH_inv_4)) 0)) (exists ((pos Int)) (and (>= pos 0) (<= (+ pos (- _FH_inv_1)) (- 1)) (= (+ (select _FH_inv_0 pos) (- _FH_inv_3)) 0))))))
+real 0.25
+user 0.24
+sys 0.01
+array_altern_find1_3.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 Int)(_FH_inv_2 Int)(_FH_inv_3 Int)(_FH_inv_4 Int)) Bool
+  (and (>= _FH_inv_1 0) (>= (+ _FH_inv_4 (* (- 1) _FH_inv_2)) 0) (or (>= (+ _FH_inv_2 (- _FH_inv_4)) 0) (exists ((pos Int)) (and (>= pos 0) (<= (+ pos (- _FH_inv_1)) (- 1)) (= (+ (select _FH_inv_0 pos) (- _FH_inv_3)) 0))))))
+real 0.25
+user 0.25
+sys 0.00
+array_altern_find_max_1.smt2
+unknown
+real 0.23
+user 0.22
+sys 0.01
+array_altern_find_max_from_second_1.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 Int)(_FH_inv_2 Int)(_FH_inv_3 Int)) Bool
+  (and (>= _FH_inv_1 1) (>= (+ _FH_inv_2 (* (- 1) (select _FH_inv_0 0))) 0) (=> (< 0 _FH_inv_3) (exists ((k Int)) (and (>= k 0) (< (+ k (- _FH_inv_3)) 0) (<= (+ k (- _FH_inv_1)) (- 1)) (= (+ (select _FH_inv_0 k) (- _FH_inv_2)) 0))))))
+real 0.25
+user 0.23
+sys 0.02
+array_altern_find_max_local_0.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 Int)(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)) Bool
+  (and (>= (+ (select _FH_inv_1 0) (* (- 1) (select _FH_inv_0 0))) 0) (>= (+ (select _FH_inv_0 0) (* (- 1) (select _FH_inv_1 0))) 0) (>= (+ _FH_inv_2 (* (- 1) _FH_inv_3)) 1) (>= (+ _FH_inv_3 (* (- 1) _FH_inv_5)) (- 1)) (>= (+ _FH_inv_5 (select _FH_inv_1 0) (* (- 1) (select _FH_inv_0 0))) 1) (forall ((k Int)) (=> (and (>= k 0) (>= _FH_inv_4 1) (< (+ k (- _FH_inv_4)) 0) (or (and (>= k 0) (<= (+ k (- _FH_inv_3)) 0)) (and (>= k 0) (<= (+ k (- _FH_inv_2)) (- 1))) (and (>= k 0) (<= (+ k _FH_inv_2 (- _FH_inv_3) (- _FH_inv_3)) 0))) (forall ((l Int)) (=> (and (>= l 0) (< (+ l (- k)) 0) (or (and (>= l 0) (<= (+ l (- _FH_inv_3)) 0)) (and (>= l 0) (<= (+ l (- _FH_inv_2)) (- 1))) (and (>= l 0) (<= (+ l _FH_inv_2 (- _FH_inv_3) (- _FH_inv_3)) 0)))) (< (select _FH_inv_0 l) (select _FH_inv_0 k))))) (exists ((j Int)) (and (>= j 0) (<= (+ j (- _FH_inv_5)) (- 1)) (= (+ (select _FH_inv_0 k) (- (select _FH_inv_1 j))) 0)))))))
+real 0.57
+user 0.57
+sys 0.01
+array_altern_find_max_local_1.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 Int)(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)) Bool
+  (and (>= (+ (select _FH_inv_1 0) (* (- 1) (select _FH_inv_0 0))) 0) (>= (+ (select _FH_inv_0 0) (* (- 1) (select _FH_inv_1 0))) 0) (>= (+ _FH_inv_2 (* (- 1) _FH_inv_3)) 1) (>= (+ _FH_inv_3 (* (- 1) _FH_inv_5)) (- 1)) (>= (+ _FH_inv_5 (select _FH_inv_1 0) (* (- 1) (select _FH_inv_0 0))) 1) (forall ((j Int)) (exists ((k Int)) (=> (and (>= j 0) (>= _FH_inv_4 1) (<= (+ j (- _FH_inv_5)) (- 1))) (and (>= k 0) (< (+ k (- _FH_inv_4)) 0) (or (and (>= k 0) (<= (+ k (- _FH_inv_3)) 0)) (and (>= k 0) (<= (+ k (- _FH_inv_2)) (- 1))) (and (>= k 0) (<= (+ k _FH_inv_2 (- _FH_inv_3) (- _FH_inv_3)) 0))) (= (+ (select _FH_inv_1 j) (- (select _FH_inv_0 k))) 0)))))))
+real 0.46
+user 0.46
+sys 0.01
+array_altern_find_max_up_to_1.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 Int)(_FH_inv_3 Int)(_FH_inv_4 Int)) Bool
+  (and (>= _FH_inv_3 0) (>= (+ _FH_inv_2 (* (- 1) _FH_inv_3)) 0) (forall ((j Int)) (exists ((k Int)) (=> (and (>= j 0) (>= _FH_inv_4 0) (< (+ j (- _FH_inv_4)) 0) (<= (+ j (- _FH_inv_2)) (- 1))) (and (>= k 0) (<= (+ k (- j)) 0) (or (and (>= k 0) (<= (+ k (- _FH_inv_3)) 0)) (and (>= k 0) (<= (+ k (- _FH_inv_2)) (- 1))) (and (>= k 0) (<= (+ k _FH_inv_2 (- _FH_inv_3) (- _FH_inv_3)) 0))) (= (+ (select _FH_inv_1 j) (- (select _FH_inv_0 k))) 0)))))))
+real 0.26
+user 0.26
+sys 0.00
+array_altern_find_min_1.smt2
+unknown
+real 0.23
+user 0.21
+sys 0.02
+array_altern_find_min_local_0.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 Int)(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)) Bool
+  (and (>= (+ (select _FH_inv_1 0) (* (- 1) (select _FH_inv_0 0))) 0) (>= (+ (select _FH_inv_0 0) (* (- 1) (select _FH_inv_1 0))) 0) (>= (+ _FH_inv_2 (* (- 1) _FH_inv_3)) 1) (>= (+ _FH_inv_3 (* (- 1) _FH_inv_5)) (- 1)) (>= (+ _FH_inv_5 (select _FH_inv_1 0) (* (- 1) (select _FH_inv_0 0))) 1) (forall ((k Int)) (=> (and (>= k 0) (>= _FH_inv_4 1) (< (+ k (- _FH_inv_4)) 0) (or (and (>= k 0) (<= (+ k (- _FH_inv_2)) (- 1))) (and (>= k 0) (<= (+ k (- _FH_inv_3)) 0)) (and (>= k 0) (<= (+ k _FH_inv_2 (- _FH_inv_3) (- _FH_inv_3)) 0))) (forall ((l Int)) (=> (and (>= l 0) (< (+ l (- k)) 0) (or (and (>= l 0) (<= (+ l (- _FH_inv_2)) (- 1))) (and (>= l 0) (<= (+ l (- _FH_inv_3)) 0)) (and (>= l 0) (<= (+ l _FH_inv_2 (- _FH_inv_3) (- _FH_inv_3)) 0)))) (< (select _FH_inv_0 k) (select _FH_inv_0 l))))) (exists ((j Int)) (and (>= j 0) (<= (+ j (- _FH_inv_5)) (- 1)) (= (+ (select _FH_inv_0 k) (- (select _FH_inv_1 j))) 0)))))))
+real 0.52
+user 0.51
+sys 0.01
+array_altern_find_min_local_1.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 Int)(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)) Bool
+  (and (>= (+ (select _FH_inv_1 0) (* (- 1) (select _FH_inv_0 0))) 0) (>= (+ (select _FH_inv_0 0) (* (- 1) (select _FH_inv_1 0))) 0) (>= (+ _FH_inv_2 (* (- 1) _FH_inv_3)) 1) (>= (+ _FH_inv_3 (* (- 1) _FH_inv_5)) (- 1)) (>= (+ _FH_inv_5 (select _FH_inv_1 0) (* (- 1) (select _FH_inv_0 0))) 1) (forall ((j Int)) (exists ((k Int)) (=> (and (>= j 0) (>= _FH_inv_4 1) (<= (+ j (- _FH_inv_5)) (- 1))) (and (>= k 0) (< (+ k (- _FH_inv_4)) 0) (or (and (>= k 0) (<= (+ k (- _FH_inv_3)) 0)) (and (>= k 0) (<= (+ k (- _FH_inv_2)) (- 1))) (and (>= k 0) (<= (+ k _FH_inv_2 (- _FH_inv_3) (- _FH_inv_3)) 0))) (= (+ (select _FH_inv_1 j) (- (select _FH_inv_0 k))) 0)))))))
+real 0.46
+user 0.45
+sys 0.01
+array_altern_find_min_up_to_1.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 Int)(_FH_inv_3 Int)(_FH_inv_4 Int)) Bool
+  (and (>= _FH_inv_3 0) (>= (+ _FH_inv_2 (* (- 1) _FH_inv_3)) 0) (forall ((j Int)) (exists ((k Int)) (=> (and (>= j 0) (>= _FH_inv_4 0) (< (+ j (- _FH_inv_4)) 0) (<= (+ j (- _FH_inv_2)) (- 1))) (and (>= k 0) (<= (+ k (- j)) 0) (or (and (>= k 0) (<= (+ k (- _FH_inv_2)) (- 1))) (and (>= k 0) (<= (+ k (- _FH_inv_3)) 0)) (and (>= k 0) (<= (+ k _FH_inv_2 (- _FH_inv_3) (- _FH_inv_3)) 0))) (= (+ (select _FH_inv_1 j) (- (select _FH_inv_0 k))) 0)))))))
+real 0.25
+user 0.25
+sys 0.00
+array_altern_merge_interleave_2.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 (Array Int Int))(_FH_inv_3 Int)(_FH_inv_4 Int)) Bool
+  (and (>= _FH_inv_3 0) (forall ((pos Int)) (exists ((j Int)) (=> (and (>= pos 0) (< (+ pos (- _FH_inv_4)) 0) (or (and (>= pos 0) (<= (+ pos (* (- 2) _FH_inv_3)) (- 2))) (and (>= pos 1) (<= (+ pos (* (- 2) _FH_inv_3)) (- 1))))) (or (and (= (+ (select _FH_inv_2 pos) (- (select _FH_inv_0 j))) 0) (>= j 0) (<= (+ j (- _FH_inv_3)) (- 1))) (and (= (+ (select _FH_inv_2 pos) (- (select _FH_inv_1 j))) 0) (>= j 0) (<= (+ j (- _FH_inv_3)) (- 1)))))))))
+real 0.20
+user 0.19
+sys 0.01
+array_altern_partition-harder_0.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 (Array Int Int))(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)(_FH_inv_6 Int)) Bool
+  (and (>= _FH_inv_5 0) (>= _FH_inv_6 0) (>= (+ _FH_inv_3 (* (- 1) _FH_inv_5)) 0) (>= (+ _FH_inv_3 (* (- 1) _FH_inv_6)) 0) (forall ((pos Int)) (=> (and (>= pos 0) (>= _FH_inv_4 0) (<= (+ pos (- _FH_inv_5)) (- 1))) (exists ((pos2 Int)) (and (>= pos2 0) (< (+ pos2 (- _FH_inv_4)) 0) (<= (+ pos2 (- _FH_inv_3)) (- 1)) (= (+ (select _FH_inv_1 pos) (- (select _FH_inv_0 pos2))) 0)))))))
+real 0.42
+user 0.42
+sys 0.01
+array_altern_partition-harder_1.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 (Array Int Int))(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)(_FH_inv_6 Int)) Bool
+  (and (>= _FH_inv_5 0) (>= _FH_inv_6 0) (>= (+ _FH_inv_3 (* (- 1) _FH_inv_5)) 0) (>= (+ _FH_inv_3 (* (- 1) _FH_inv_6)) 0) (forall ((pos Int)) (=> (and (>= pos 0) (>= _FH_inv_4 0) (<= (+ pos (- _FH_inv_6)) (- 1))) (exists ((pos2 Int)) (and (>= pos2 0) (< (+ pos2 (- _FH_inv_4)) 0) (<= (+ pos2 (- _FH_inv_3)) (- 1)) (= (+ (select _FH_inv_2 pos) (- (select _FH_inv_0 pos2))) 0)))))))
+real 0.42
+user 0.41
+sys 0.01
+array_altern_partition-harder_2.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 (Array Int Int))(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)(_FH_inv_6 Int)) Bool
+  (and (>= _FH_inv_5 0) (>= _FH_inv_6 0) (>= (+ _FH_inv_3 (* (- 1) _FH_inv_5)) 0) (>= (+ _FH_inv_3 (* (- 1) _FH_inv_6)) 0) (forall ((pos Int)) (=> (and (>= pos 0) (>= _FH_inv_4 0) (< (+ pos (- _FH_inv_4)) 0) (>= (select _FH_inv_0 pos) 0) (<= (+ pos (- _FH_inv_3)) (- 1))) (exists ((pos2 Int)) (and (>= pos2 0) (<= (+ pos2 (- _FH_inv_5)) (- 1)) (= (+ (select _FH_inv_1 pos2) (- (select _FH_inv_0 pos))) 0)))))))
+real 0.43
+user 0.43
+sys 0.00
+array_altern_partition-harder_3.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 (Array Int Int))(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)(_FH_inv_6 Int)) Bool
+  (and (>= _FH_inv_5 0) (>= _FH_inv_6 0) (>= (+ _FH_inv_3 (* (- 1) _FH_inv_5)) 0) (>= (+ _FH_inv_3 (* (- 1) _FH_inv_6)) 0) (forall ((pos Int)) (=> (and (< (select _FH_inv_0 pos) 0) (>= pos 0) (>= _FH_inv_4 0) (< (+ pos (- _FH_inv_4)) 0) (<= (+ pos (- _FH_inv_3)) (- 1))) (exists ((pos2 Int)) (and (>= pos2 0) (<= (+ pos2 (- _FH_inv_6)) (- 1)) (= (+ (select _FH_inv_2 pos2) (- (select _FH_inv_0 pos))) 0)))))))
+real 0.43
+user 0.43
+sys 0.00
+array_altern_partition-harder_4.smt2
+Bootstrap: Multiple array accesses for same quantified variable currently unimplemented
+Bootstrap: Multiple array accesses for same quantified variable currently unimplemented
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 (Array Int Int))(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)(_FH_inv_6 Int)) Bool
+  (and (>= _FH_inv_5 0) (>= _FH_inv_6 0) (>= (+ _FH_inv_3 (* (- 1) _FH_inv_5)) 0) (>= (+ _FH_inv_3 (* (- 1) _FH_inv_6)) 0) (forall ((pos Int)) (=> (and (>= pos 0) (>= _FH_inv_4 0) (< (+ pos (- _FH_inv_4)) 0) (<= (+ pos (- _FH_inv_3)) (- 1))) (exists ((pos2 Int)) (or (and (>= pos2 0) (< (+ pos2 (- _FH_inv_6)) 0) (= (+ (select _FH_inv_2 pos2) (- (select _FH_inv_0 pos))) 0)) (and (>= pos2 0) (< (+ pos2 (- _FH_inv_5)) 0) (= (+ (select _FH_inv_1 pos2) (- (select _FH_inv_0 pos))) 0))))))))
+real 0.46
+user 0.45
+sys 0.02
+array_altern_partition-harder_cust0.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 (Array Int Int))(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)(_FH_inv_6 Int)) Bool
+  (and (>= _FH_inv_5 0) (>= _FH_inv_6 0) (>= (+ _FH_inv_3 (* (- 1) _FH_inv_5)) 0) (>= (+ _FH_inv_3 (* (- 1) _FH_inv_6)) 0) (forall ((pos Int)) (=> (and (>= pos 0) (>= _FH_inv_4 0) (< (+ pos (- _FH_inv_4)) 0) (<= (+ pos (- _FH_inv_3)) (- 1))) (exists ((pos2 Int)) (or (and (= (+ (select _FH_inv_1 pos2) (- (select _FH_inv_0 pos))) 0) (>= pos2 0) (<= (+ pos2 (- _FH_inv_5)) (- 1))) (and (= (+ (select _FH_inv_2 pos2) (- (select _FH_inv_0 pos))) 0) (>= pos2 0) (<= (+ pos2 (- _FH_inv_6)) (- 1)))))))))
+real 0.45
+user 0.45
+sys 0.00
+array_altern_partition_2.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 (Array Int Int))(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)(_FH_inv_6 Int)) Bool
+  (and (>= _FH_inv_5 0) (>= _FH_inv_6 0) (>= (+ _FH_inv_3 (* (- 1) _FH_inv_5)) 0) (>= (+ _FH_inv_3 (* (- 1) _FH_inv_6)) 0) (forall ((pos Int)) (=> (and (>= pos 0) (>= _FH_inv_4 0) (<= (+ pos (- _FH_inv_5)) (- 1))) (exists ((pos2 Int)) (and (>= pos2 0) (<= (+ pos2 (- _FH_inv_3)) (- 1)) (= (+ (select _FH_inv_1 pos) (- (select _FH_inv_0 pos2))) 0)))))))
+real 0.42
+user 0.41
+sys 0.00
+array_altern_partition_3.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 (Array Int Int))(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)(_FH_inv_6 Int)) Bool
+  (and (>= _FH_inv_5 0) (>= _FH_inv_6 0) (>= (+ _FH_inv_3 (* (- 1) _FH_inv_5)) 0) (>= (+ _FH_inv_3 (* (- 1) _FH_inv_6)) 0) (forall ((pos Int)) (=> (and (>= pos 0) (>= _FH_inv_4 0) (<= (+ pos (- _FH_inv_6)) (- 1))) (exists ((pos2 Int)) (and (>= pos2 0) (<= (+ pos2 (- _FH_inv_3)) (- 1)) (= (+ (select _FH_inv_2 pos) (- (select _FH_inv_0 pos2))) 0)))))))
+real 0.41
+user 0.42
+sys 0.00
+array_altern_partition_4.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 (Array Int Int))(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)(_FH_inv_6 Int)) Bool
+  (and (>= _FH_inv_5 0) (>= _FH_inv_6 0) (>= (+ _FH_inv_3 (* (- 1) _FH_inv_5)) 0) (>= (+ _FH_inv_3 (* (- 1) _FH_inv_6)) 0) (forall ((pos Int)) (=> (and (>= pos 0) (>= _FH_inv_4 0) (< (+ pos (- _FH_inv_4)) 0) (>= (select _FH_inv_0 pos) 0) (<= (+ pos (- _FH_inv_3)) (- 1))) (exists ((pos2 Int)) (and (>= pos2 0) (<= (+ pos2 (- _FH_inv_5)) (- 1)) (= (+ (select _FH_inv_1 pos2) (- (select _FH_inv_0 pos))) 0)))))))
+real 0.42
+user 0.42
+sys 0.00
+array_altern_partition_5.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 (Array Int Int))(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)(_FH_inv_6 Int)) Bool
+  (and (>= _FH_inv_5 0) (>= _FH_inv_6 0) (>= (+ _FH_inv_3 (* (- 1) _FH_inv_5)) 0) (>= (+ _FH_inv_3 (* (- 1) _FH_inv_6)) 0) (forall ((pos Int)) (=> (and (< (select _FH_inv_0 pos) 0) (>= pos 0) (>= _FH_inv_4 0) (< (+ pos (- _FH_inv_4)) 0) (<= (+ pos (- _FH_inv_3)) (- 1))) (exists ((pos2 Int)) (and (>= pos2 0) (<= (+ pos2 (- _FH_inv_6)) (- 1)) (= (+ (select _FH_inv_2 pos2) (- (select _FH_inv_0 pos))) 0)))))))
+real 0.42
+user 0.42
+sys 0.00
+array_altern_partition_6.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 (Array Int Int))(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)(_FH_inv_6 Int)) Bool
+  (and (>= _FH_inv_5 0) (>= _FH_inv_6 0) (>= (+ _FH_inv_3 (* (- 1) _FH_inv_5)) 0) (>= (+ _FH_inv_3 (* (- 1) _FH_inv_6)) 0) (forall ((pos Int)) (=> (and (>= pos 0) (>= _FH_inv_4 0) (< (+ pos (- _FH_inv_4)) 0) (<= (+ pos (- _FH_inv_3)) (- 1))) (exists ((pos2 Int)) (or (and (= (+ (select _FH_inv_1 pos2) (- (select _FH_inv_0 pos))) 0) (>= pos2 0) (<= (+ pos2 (- _FH_inv_3)) (- 1))) (and (= (+ (select _FH_inv_2 pos2) (- (select _FH_inv_0 pos))) 0) (>= pos2 0) (<= (+ pos2 (- _FH_inv_3)) (- 1)))))))))
+real 0.46
+user 0.46
+sys 0.00
+array_altern_str_len_0.smt2
+Success after bootstrapping
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 Int)) Bool
+  (and (>= _FH_inv_1 0) (=> (exists ((pos Int)) (and (= (select _FH_inv_0 pos) 0) (>= pos 0) (<= (+ pos (- _FH_inv_1)) (- 1)))) (forall ((j Int)) (=> (and (>= j 0) (<= (+ j (- _FH_inv_1)) (- 1))) (distinct (select _FH_inv_0 j) 0))))))
+real 0.12
+user 0.11
+sys 0.01
+array_altern_swap_cust0.smt2
+unable lit: (forall (INT) (((j1>=0)&&((j1+(-_FH_inv_3))<0))->(exists (INT) (select(_FH_inv_0, j1)=select(_FH_inv_1, __loc_var_0)))))
+freqhorn: /home/darin/aeval/include/ae/ExprSimpl.hpp:4598: void ufo::getLiterals(expr::Expr, expr::ExprSet&, bool): Assertion `0' failed.
+./runboot.sh: line 27: 2824775 Aborted                 timeout "$to" "$freqhorn" $stdsettings "$benchpath"
+real 0.11
+user 0.11
+sys 0.00

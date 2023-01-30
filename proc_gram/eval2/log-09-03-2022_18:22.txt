@@ -1,0 +1,289 @@
+Sat Sep  3 18:22:07 EDT 2022
+Standard settings: --v1 --maxrecdepth 1 --gen_method newtrav --trav_type striped --trav_priority sfs --to 1000 --no-save-lemmas --inv-templ 0
+Timeout: 300
+Freqhorn: ../build/tools/deep/freqhorn
+check_equal_set_flag.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 1 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 Int)(_FH_inv_3 Int)(_FH_inv_4 Int)) Bool
+  (=> (and (>= _FH_inv_4 0) (= (+ _FH_inv_3 (- 1)) 0)) (exists ((exvar Int)) (distinct (select _FH_inv_0 (:var 0)) (select _FH_inv_1 (:var 0))))))
+real 0.23
+user 0.22
+sys 0.00
+collect_indices_equal_values.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 73 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 (Array Int Int))(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)) Bool
+  (and (not (< _FH_inv_3 (- 1))) (not (= _FH_inv_3 (- 1))) (not (< _FH_inv_3 _FH_inv_5)) (forall ((favar Int)) (=> (and (>= _FH_inv_4 0) (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_3)) 0) (= (+ (select _FH_inv_0 (:var 0)) (- (select _FH_inv_1 (:var 0)))) 0)) (exists ((exvar Int)) (and (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_5)) 0) (= (+ (:var 1) (- (select _FH_inv_2 (:var 0)))) 0))))) (> _FH_inv_5 (- 1))))
+real 0.35
+user 0.34
+sys 0.01
+collect_indices_equal_values2.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 73 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 (Array Int Int))(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)) Bool
+  (and (not (< _FH_inv_3 (- 1))) (not (= _FH_inv_3 (- 1))) (not (< _FH_inv_3 _FH_inv_5)) (forall ((favar Int)) (=> (and (>= _FH_inv_4 0) (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_3)) 0) (= (+ (select _FH_inv_0 (:var 0)) (- (select _FH_inv_1 (:var 0)))) 0)) (exists ((exvar Int)) (and (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_5)) 0) (= (+ (:var 1) (- (select _FH_inv_2 (:var 0)))) 0))))) (> _FH_inv_5 (- 1))))
+real 0.36
+user 0.36
+sys 0.00
+copy.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 1 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 Int)(_FH_inv_3 Int)) Bool
+  (forall ((favar Int)) (=> (and (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_2)) 0)) (exists ((exvar Int)) (= (select _FH_inv_1 (:var 1)) (select _FH_inv_0 (:var 0)))))))
+real 0.20
+user 0.19
+sys 0.00
+copy_nonzero.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 1 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 Int)(_FH_inv_3 Int)(_FH_inv_4 Int)) Bool
+  (forall ((favar Int)) (=> (and (>= _FH_inv_4 0) (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_3)) 0)) (exists ((exvar Int)) (= (select _FH_inv_0 (:var 1)) (select _FH_inv_1 (:var 0)))))))
+real 0.24
+user 0.23
+sys 0.01
+copy_positive.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 1 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 Int)(_FH_inv_3 Int)(_FH_inv_4 Int)) Bool
+  (forall ((favar Int)) (=> (and (>= _FH_inv_4 0) (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_3)) 0)) (exists ((exvar Int)) (= (select _FH_inv_0 (:var 1)) (select _FH_inv_1 (:var 0)))))))
+real 0.23
+user 0.21
+sys 0.01
+exists.smt2
+Unable to find invariant with given grammar and maximum depth.
+Unknown after 5284 iterations
+real 10.06
+user 10.21
+sys 0.29
+find1.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 1 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 Int)(_FH_inv_2 Int)(_FH_inv_3 Int)(_FH_inv_4 Int)) Bool
+  (or (>= (+ _FH_inv_2 (- _FH_inv_4)) 0) (exists ((exvar Int)) (= _FH_inv_3 (select _FH_inv_0 (:var 0))))))
+real 0.22
+user 0.21
+sys 0.01
+find11.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 1 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 Int)(_FH_inv_2 Int)(_FH_inv_3 Int)(_FH_inv_4 Int)) Bool
+  (=> (and (>= _FH_inv_4 0) (distinct (+ _FH_inv_2 (- _FH_inv_4)) 0)) (exists ((exvar Int)) (= _FH_inv_3 (select _FH_inv_0 (:var 0))))))
+real 0.22
+user 0.22
+sys 0.00
+find2.smt2
+freqhorn: /usr/include/boost/smart_ptr/intrusive_ptr.hpp:199: T* boost::intrusive_ptr<T>::operator->() const [with T = expr::ENode]: Assertion `px != 0' failed.
+real 0.17
+user 0.16
+sys 0.01
+find_max.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 5361 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 Int)(_FH_inv_2 Int)(_FH_inv_3 Int)) Bool
+  (and (not (< _FH_inv_1 (- 1))) (not (= _FH_inv_1 (- 1))) (=> (< _FH_inv_3 _FH_inv_1) (= 0 _FH_inv_1)) (=> (and (>= _FH_inv_3 0) (exists ((exvar Int)) (and (>= (:var 0) 0) (>= (select _FH_inv_0 (:var 0)) 0) (< (+ (:var 0) (- _FH_inv_1)) 0)))) (exists ((exvar Int)) (and (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_3)) 0) (= (+ _FH_inv_2 (- (select _FH_inv_0 (:var 0)))) 0)))) (=> (not (and (>= _FH_inv_3 0) (exists ((exvar Int)) (and (>= (:var 0) 0) (>= (select _FH_inv_0 (:var 0)) 0) (< (+ (:var 0) (- _FH_inv_1)) 0))))) (= 0 _FH_inv_2)) (> _FH_inv_2 (- 1))))
+real 10.75
+user 10.91
+sys 0.29
+find_max_from_second.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 73 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 Int)(_FH_inv_2 Int)(_FH_inv_3 Int)) Bool
+  (and (=> (< 0 _FH_inv_3) (exists ((exvar Int)) (and (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_3)) 0) (= (+ _FH_inv_2 (- (select _FH_inv_0 (:var 0)))) 0)))) (> _FH_inv_1 0)))
+real 0.30
+user 0.29
+sys 0.01
+find_max_local.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 11817 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 Int)(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)) Bool
+  (and (not (< _FH_inv_2 (- 1))) (not (= _FH_inv_2 (- 1))) (not (< _FH_inv_3 (- 1))) (not (= _FH_inv_3 (- 1))) (not (< _FH_inv_5 (- 1))) (not (= _FH_inv_5 (- 1))) (not (= 0 _FH_inv_2)) (not (= 0 _FH_inv_5)) (not (< _FH_inv_2 _FH_inv_3)) (not (not (< _FH_inv_3 _FH_inv_2))) (not (< _FH_inv_2 _FH_inv_5)) (=> (< 1 _FH_inv_2) (< (- 1) _FH_inv_4)) (=> (< _FH_inv_4 _FH_inv_2) (= 1 _FH_inv_2)) (=> (= 1 _FH_inv_5) (= 0 _FH_inv_3)) (=> (= 0 _FH_inv_3) (= 1 _FH_inv_5)) (forall ((favar Int)) (=> (and (>= _FH_inv_4 1) (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_5)) 0)) (exists ((exvar Int)) (and (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_4)) 0) (= (+ (select _FH_inv_1 (:var 1)) (- (select _FH_inv_0 (:var 0)))) 0)))))))
+real 27.66
+user 28.33
+sys 0.54
+find_max_local2.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 109 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 Int)(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)) Bool
+  (and (not (< _FH_inv_2 (- 1))) (not (= _FH_inv_2 (- 1))) (not (= _FH_inv_3 (- 1))) (not (= 0 _FH_inv_5)) (not (< _FH_inv_2 _FH_inv_5)) (forall ((favar Int)) (=> (and (>= _FH_inv_4 1) (>= (:var 0) 0) (forall ((favar2 Int)) (=> (and (>= (:var 0) 0) (< (+ (:var 0) (- (:var 1))) 0)) (< (select _FH_inv_0 (:var 0)) (select _FH_inv_0 (:var 1))))) (< (+ (:var 0) (- _FH_inv_2)) 0)) (exists ((exvar Int)) (and (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_5)) 0) (= (+ (select _FH_inv_0 (:var 1)) (- (select _FH_inv_1 (:var 0)))) 0))))) (> _FH_inv_2 0) (> _FH_inv_3 (- 1)) (> _FH_inv_5 (- 1)) (< (+ _FH_inv_3 (- _FH_inv_2)) 0)))
+real 0.45
+user 0.44
+sys 0.01
+find_max_up_to.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 73 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 Int)(_FH_inv_3 Int)(_FH_inv_4 Int)) Bool
+  (and (not (< _FH_inv_2 (- 1))) (not (= _FH_inv_2 (- 1))) (not (= _FH_inv_3 (- 1))) (not (< _FH_inv_2 _FH_inv_3)) (forall ((favar Int)) (=> (and (>= _FH_inv_4 0) (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_2)) 0)) (exists ((exvar Int)) (and (>= (:var 0) 0) (<= (+ (:var 0) (- (:var 1))) 0) (= (+ (select _FH_inv_1 (:var 1)) (- (select _FH_inv_0 (:var 0)))) 0))))) (> _FH_inv_3 (- 1))))
+real 0.35
+user 0.33
+sys 0.01
+find_min.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 5361 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 Int)(_FH_inv_2 Int)(_FH_inv_3 Int)) Bool
+  (and (not (< _FH_inv_1 (- 1))) (not (= _FH_inv_1 (- 1))) (< _FH_inv_2 1) (=> (< _FH_inv_3 _FH_inv_1) (= 0 _FH_inv_1)) (=> (exists ((exvar Int)) (and (>= _FH_inv_3 0) (<= (select _FH_inv_0 (:var 0)) 0) (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_1)) 0))) (exists ((exvar Int)) (and (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_1)) 0) (= (+ _FH_inv_2 (- (select _FH_inv_0 (:var 0)))) 0)))) (=> (not (exists ((exvar Int)) (and (>= _FH_inv_3 0) (<= (select _FH_inv_0 (:var 0)) 0) (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_1)) 0)))) (< (- 1) _FH_inv_2))))
+real 11.06
+user 11.32
+sys 0.21
+find_min_local.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 11817 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 Int)(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)) Bool
+  (and (not (< _FH_inv_2 (- 1))) (not (= _FH_inv_2 (- 1))) (not (< _FH_inv_3 (- 1))) (not (= _FH_inv_3 (- 1))) (not (< _FH_inv_5 (- 1))) (not (= _FH_inv_5 (- 1))) (not (= 0 _FH_inv_2)) (not (= 0 _FH_inv_5)) (not (< _FH_inv_2 _FH_inv_3)) (not (not (< _FH_inv_3 _FH_inv_2))) (not (< _FH_inv_2 _FH_inv_5)) (=> (< 1 _FH_inv_2) (< (- 1) _FH_inv_4)) (=> (< _FH_inv_4 _FH_inv_2) (= 1 _FH_inv_2)) (=> (= 1 _FH_inv_5) (= 0 _FH_inv_3)) (=> (= 0 _FH_inv_3) (= 1 _FH_inv_5)) (forall ((favar Int)) (=> (and (>= _FH_inv_4 1) (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_5)) 0)) (exists ((exvar Int)) (and (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_4)) 0) (= (+ (select _FH_inv_1 (:var 1)) (- (select _FH_inv_0 (:var 0)))) 0)))))))
+real 27.58
+user 28.20
+sys 0.59
+find_min_local2.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 109 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 Int)(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)) Bool
+  (and (not (< _FH_inv_2 (- 1))) (not (= _FH_inv_2 (- 1))) (not (= _FH_inv_3 (- 1))) (not (= 0 _FH_inv_5)) (not (< _FH_inv_2 _FH_inv_5)) (forall ((favar Int)) (=> (and (>= _FH_inv_4 1) (>= (:var 0) 0) (forall ((favar2 Int)) (=> (and (>= (:var 0) 0) (< (+ (:var 0) (- (:var 1))) 0)) (< (select _FH_inv_0 (:var 1)) (select _FH_inv_0 (:var 0))))) (< (+ (:var 0) (- _FH_inv_2)) 0)) (exists ((exvar Int)) (and (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_5)) 0) (= (+ (select _FH_inv_0 (:var 1)) (- (select _FH_inv_1 (:var 0)))) 0))))) (> _FH_inv_2 0) (> _FH_inv_3 (- 1)) (> _FH_inv_5 (- 1)) (< (+ _FH_inv_3 (- _FH_inv_2)) 0)))
+real 0.46
+user 0.46
+sys 0.01
+find_min_up_to.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 73 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 Int)(_FH_inv_3 Int)(_FH_inv_4 Int)) Bool
+  (and (not (< _FH_inv_2 (- 1))) (not (= _FH_inv_2 (- 1))) (not (= _FH_inv_3 (- 1))) (not (< _FH_inv_2 _FH_inv_3)) (forall ((favar Int)) (=> (and (>= _FH_inv_4 0) (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_2)) 0)) (exists ((exvar Int)) (and (>= (:var 0) 0) (<= (+ (:var 0) (- (:var 1))) 0) (= (+ (select _FH_inv_1 (:var 1)) (- (select _FH_inv_0 (:var 0)))) 0))))) (> _FH_inv_3 (- 1))))
+real 0.34
+user 0.32
+sys 0.02
+init_add.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 2 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 Int)(_FH_inv_2 Int)) Bool
+  (and (forall ((favar Int)) (=> (and (>= (+ (:var 0) (- _FH_inv_1)) 0) (< (+ (:var 0) (- _FH_inv_2)) 0)) (= 0 (select _FH_inv_0 (:var 0))))) (forall ((favar Int)) (=> (and (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_1)) 0)) (= (:var 0) (select _FH_inv_0 (:var 0)))))))
+real 0.20
+user 0.19
+sys 0.01
+map.smt2
+Unable to find invariant with given grammar and maximum depth.
+Unknown after 74 iterations
+real 0.43
+user 0.43
+sys 0.00
+merge_interleave.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 1 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 (Array Int Int))(_FH_inv_3 Int)(_FH_inv_4 Int)) Bool
+  (forall ((favar Int)) (=> (and (>= (:var 0) 0) (< (+ (:var 0) (* (- 2) _FH_inv_3)) 0)) (exists ((exvar Int)) (or (= (+ (select _FH_inv_2 (:var 1)) (- (select _FH_inv_0 (:var 0)))) 0) (= (+ (select _FH_inv_2 (:var 1)) (- (select _FH_inv_1 (:var 0)))) 0))))))
+real 0.21
+user 0.20
+sys 0.01
+mod.smt2
+Unable to find invariant with given grammar and maximum depth.
+Unknown after 91 iterations
+real 0.33
+user 0.33
+sys 0.00
+partition-harder.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 109 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 (Array Int Int))(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)(_FH_inv_6 Int)) Bool
+  (and (not (< _FH_inv_3 (- 1))) (not (= _FH_inv_3 (- 1))) (not (< _FH_inv_3 _FH_inv_5)) (not (< _FH_inv_3 _FH_inv_6)) (forall ((favar Int)) (=> (and (>= _FH_inv_4 0) (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_5)) 0)) (exists ((exvar Int)) (and (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_4)) 0) (= (+ (select _FH_inv_1 (:var 1)) (- (select _FH_inv_0 (:var 0)))) 0))))) (> _FH_inv_5 (- 1)) (> _FH_inv_6 (- 1))))
+real 0.42
+user 0.42
+sys 0.00
+partition-harder2.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 109 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 (Array Int Int))(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)(_FH_inv_6 Int)) Bool
+  (and (not (< _FH_inv_3 (- 1))) (not (= _FH_inv_3 (- 1))) (not (< _FH_inv_3 _FH_inv_5)) (not (< _FH_inv_3 _FH_inv_6)) (forall ((favar Int)) (=> (and (>= _FH_inv_4 0) (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_6)) 0)) (exists ((exvar Int)) (and (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_4)) 0) (= (+ (select _FH_inv_2 (:var 1)) (- (select _FH_inv_0 (:var 0)))) 0))))) (> _FH_inv_5 (- 1)) (> _FH_inv_6 (- 1))))
+real 0.43
+user 0.42
+sys 0.00
+partition-harder3.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 109 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 (Array Int Int))(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)(_FH_inv_6 Int)) Bool
+  (and (not (< _FH_inv_3 (- 1))) (not (= _FH_inv_3 (- 1))) (not (< _FH_inv_3 _FH_inv_5)) (not (< _FH_inv_3 _FH_inv_6)) (forall ((favar Int)) (=> (and (>= _FH_inv_4 0) (>= (:var 0) 0) (>= (select _FH_inv_0 (:var 0)) 0) (< (+ (:var 0) (- _FH_inv_3)) 0)) (exists ((exvar Int)) (and (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_5)) 0) (= (+ (select _FH_inv_1 (:var 0)) (- (select _FH_inv_0 (:var 1)))) 0))))) (> _FH_inv_5 (- 1)) (> _FH_inv_6 (- 1))))
+real 0.43
+user 0.42
+sys 0.01
+partition-harder4.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 108 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 (Array Int Int))(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)(_FH_inv_6 Int)) Bool
+  (and (not (< _FH_inv_3 (- 1))) (not (= _FH_inv_3 (- 1))) (not (< _FH_inv_3 _FH_inv_5)) (not (< _FH_inv_3 _FH_inv_6)) (forall ((favar Int)) (=> (and (>= _FH_inv_4 0) (< (select _FH_inv_0 (:var 0)) 0) (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_3)) 0)) (exists ((exvar Int)) (and (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_6)) 0) (= (+ (select _FH_inv_2 (:var 0)) (- (select _FH_inv_0 (:var 1)))) 0))))) (> _FH_inv_5 (- 1)) (> _FH_inv_6 (- 1))))
+real 0.43
+user 0.42
+sys 0.01
+partition-harder5.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 109 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 (Array Int Int))(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)(_FH_inv_6 Int)) Bool
+  (and (not (< _FH_inv_3 (- 1))) (not (= _FH_inv_3 (- 1))) (not (< _FH_inv_3 _FH_inv_5)) (not (< _FH_inv_3 _FH_inv_6)) (forall ((favar Int)) (=> (and (>= _FH_inv_4 0) (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_3)) 0)) (exists ((exvar Int)) (or (and (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_5)) 0) (= (+ (select _FH_inv_1 (:var 0)) (- (select _FH_inv_0 (:var 1)))) 0)) (and (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_6)) 0) (= (+ (select _FH_inv_0 (:var 1)) (- (select _FH_inv_2 (:var 0)))) 0)))))) (> _FH_inv_5 (- 1)) (> _FH_inv_6 (- 1))))
+real 0.44
+user 0.44
+sys 0.01
+partition.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 1 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 (Array Int Int))(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)(_FH_inv_6 Int)) Bool
+  (forall ((favar Int)) (=> (and (>= _FH_inv_4 0) (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_5)) 0)) (exists ((exvar Int)) (= (select _FH_inv_1 (:var 1)) (select _FH_inv_0 (:var 0)))))))
+real 0.28
+user 0.27
+sys 0.01
+partition2.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 1 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 (Array Int Int))(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)(_FH_inv_6 Int)) Bool
+  (forall ((favar Int)) (=> (and (>= _FH_inv_4 0) (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_6)) 0)) (exists ((exvar Int)) (= (select _FH_inv_2 (:var 1)) (select _FH_inv_0 (:var 0)))))))
+real 0.28
+user 0.27
+sys 0.01
+partition3.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 109 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 (Array Int Int))(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)(_FH_inv_6 Int)) Bool
+  (and (not (< _FH_inv_3 (- 1))) (not (= _FH_inv_3 (- 1))) (not (< _FH_inv_3 _FH_inv_5)) (not (< _FH_inv_3 _FH_inv_6)) (forall ((favar Int)) (=> (and (>= _FH_inv_4 0) (>= (:var 0) 0) (>= (select _FH_inv_0 (:var 0)) 0) (< (+ (:var 0) (- _FH_inv_3)) 0)) (exists ((exvar Int)) (and (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_5)) 0) (= (+ (select _FH_inv_1 (:var 0)) (- (select _FH_inv_0 (:var 1)))) 0))))) (> _FH_inv_5 (- 1)) (> _FH_inv_6 (- 1))))
+real 0.42
+user 0.41
+sys 0.02
+partition4.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 108 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 (Array Int Int))(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)(_FH_inv_6 Int)) Bool
+  (and (not (< _FH_inv_3 (- 1))) (not (= _FH_inv_3 (- 1))) (not (< _FH_inv_3 _FH_inv_5)) (not (< _FH_inv_3 _FH_inv_6)) (forall ((favar Int)) (=> (and (>= _FH_inv_4 0) (< (select _FH_inv_0 (:var 0)) 0) (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_3)) 0)) (exists ((exvar Int)) (and (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_6)) 0) (= (+ (select _FH_inv_2 (:var 0)) (- (select _FH_inv_0 (:var 1)))) 0))))) (> _FH_inv_5 (- 1)) (> _FH_inv_6 (- 1))))
+real 0.43
+user 0.41
+sys 0.02
+partition5.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 109 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))(_FH_inv_2 (Array Int Int))(_FH_inv_3 Int)(_FH_inv_4 Int)(_FH_inv_5 Int)(_FH_inv_6 Int)) Bool
+  (and (not (< _FH_inv_3 (- 1))) (not (= _FH_inv_3 (- 1))) (not (< _FH_inv_3 _FH_inv_5)) (not (< _FH_inv_3 _FH_inv_6)) (forall ((favar Int)) (=> (and (>= _FH_inv_4 0) (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_3)) 0)) (exists ((exvar Int)) (or (and (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_3)) 0) (= (+ (select _FH_inv_1 (:var 0)) (- (select _FH_inv_0 (:var 1)))) 0)) (and (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_3)) 0) (= (+ (select _FH_inv_0 (:var 1)) (- (select _FH_inv_2 (:var 0)))) 0)))))) (> _FH_inv_5 (- 1)) (> _FH_inv_6 (- 1))))
+real 0.44
+user 0.44
+sys 0.00
+shift.smt2
+cpp: error: grams/shift.smt2: No such file or directory
+cpp: fatal error: no input files
+compilation terminated.
+Invalid grammar file format: No assertions provided
+real 0.08
+user 0.08
+sys 0.00
+str_len.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 1 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 Int)) Bool
+  (=> (exists ((exvar Int)) (and (= (select _FH_inv_0 (:var 0)) 0) (>= (:var 0) 0))) (forall ((favar Int)) (=> (and (>= (:var 0) 0) (< (+ (:var 0) (- _FH_inv_1)) 0)) (distinct 0 (select _FH_inv_0 (:var 0)))))))
+real 0.19
+user 0.18
+sys 0.01
+swap.smt2
+Unable to find invariant with given grammar and maximum depth.
+Success after 1 iterations
+(define-fun inv ((_FH_inv_0 (Array Int Int))(_FH_inv_1 (Array Int Int))) Bool
+  (forall ((favar Int)) (exists ((exvar Int)) (= (select _FH_inv_0 (:var 0)) (select _FH_inv_1 (:var 1))))))
+real 0.18
+user 0.17
+sys 0.00
+swap_twoarrays.smt2
+Unable to find invariant with given grammar and maximum depth.
+Unknown after 43 iterations
+real 0.25
+user 0.24
+sys 0.02
