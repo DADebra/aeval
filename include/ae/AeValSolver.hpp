@@ -743,7 +743,7 @@ namespace ufo
   inline static Expr coreQE(Expr fla, const Range& vars, bool simplify = true)
   {
     if (!emptyIntersect(fla, vars) &&
-        !containsOp<FORALL>(fla) && !containsOp<EXISTS>(fla)/* && !qeUnsupported(fla)*/)
+        !containsOp<FORALL>(fla) && !containsOp<EXISTS>(fla) && !qeUnsupported(fla))
     {
       AeValSolver ae(mk<TRUE>(fla->getFactory()), fla, vars, simplify); // exists quantified . formula
       if (ae.solve()) return ae.getValidSubset(true);

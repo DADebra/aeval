@@ -1,8 +1,8 @@
 stdsettings="--v3 --altern-ver -1 --to 1500 --no-save-lemmas --inv-templ 0"
 
-freqhorn="../build/tools/deep/freqhorn"
+freqhorn="./freqhorn-stock"
 
-to=600
+to=30
 
 cd "$(realpath "$(dirname "$0")")"
 

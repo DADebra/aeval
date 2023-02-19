@@ -325,7 +325,7 @@ class GramEnum
         continue;
       }
 
-      if (globalparams.method != TPMethod::NEWTRAV &&
+      if (globalparams.simplify && globalparams.method != TPMethod::NEWTRAV &&
           !gramCands.insert(nextcand).second)
       {
         nextcand = NULL;

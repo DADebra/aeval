@@ -19,9 +19,29 @@ echo -n "Number QFix solved uniquely: "
 awk -F, '{ if ($3 == 0 && $5 == 1 && $7 == 1 && $9 == 1) print $1; }' "$$.csv" | wc -l
 
 echo -n "Number QFix solve quickest: "
-awk -F, '{
+awk -F, '
+{
     if ($3 == 0) {
         if (($5==1 || $2<$4) && ($7==1 || $2<$6) && ($9==1 || $2<$8))
+            print $1;
+    }
+}' "$$.csv" | wc -l
+
+echo -n "Number QFix in less than a second: "
+awk -F, '
+{
+    if ($3 == 0) {
+        if (($5==1 || $2<1) && ($7==1 || $2<1) && ($9==1 || $2<1))
+            print $1;
+    }
+}' "$$.csv" | wc -l
+
+echo -n "Number QFix solves within a second: "
+awk -F, '
+function abs(v) { return v < 0 ? -v : v; }
+{
+    if ($3 == 0) {
+        if (($5==1 || abs($2-$4) < 1) && ($7==1 || abs($2-$6) < 1) && ($9==1 || abs($2-$8) < 1))
             print $1;
     }
 }' "$$.csv" | wc -l

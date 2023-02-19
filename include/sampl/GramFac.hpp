@@ -237,8 +237,11 @@ namespace ufo
       for (const auto& chc : chcs.chcs)
         if (chc.isQuery)
         {
-          assert(!postcond);
-          postcond = mkNeg(getExists(chc.body, chc.locVars));
+          Expr newpostcond = mkNeg(getExists(chc.body, chc.locVars));
+          if (postcond)
+            postcond = mk<OR>(postcond, newpostcond);
+          else
+            postcond = newpostcond;
         }
     }
 
@@ -247,8 +250,14 @@ namespace ufo
       for (const auto& chc : chcs.chcs)
         if (chc.isFact)
         {
-          assert(!precond);
-          precond = replaceAll(getExists(chc.body, chc.locVars), chc.dstVars, chcs.invVars.at(chc.dstRelation));
+          Expr newprecond = replaceAll(
+            getExists(chc.body, chc.locVars),
+            chc.dstVars, chcs.invVars.at(chc.dstRelation)
+          );
+          if (precond)
+            precond = mk<OR>(precond, newprecond);
+          else
+            precond = newprecond;
         }
     }
 
@@ -323,6 +332,10 @@ namespace ufo
       for (const auto &sort_consts : consts)
         for (Expr c : sort_consts.second)
           gram->addConst(c);
+
+      for (const auto& sort_vars : vars)
+	for (const auto& var : sort_vars.second)
+	  gram->addVar(var);
 
       for (const auto& kv : vars)
         for (VarType ty : { VarType::NONE, VarType::UNK, VarType::INC,
@@ -581,6 +594,8 @@ namespace ufo
 	  exit(11);
 	}
 
+        egram = regularizeQF(egram);
+
 	if (!isOpX<AND>(egram))
 	  // Just for ease of use; WON'T MARSHAL
 	  egram = mk<AND>(egram);
@@ -715,10 +730,6 @@ namespace ufo
 	    outs() << "priomap[<" << nt_prods.first << ", " <<
 	      prod_prio.first << ">]: " << prod_prio.second << "\n";
       }
-
-      for (const auto& sort_vars : vars)
-	for (const auto& var : sort_vars.second)
-	  gram->addVar(var);
     }
   };
 }

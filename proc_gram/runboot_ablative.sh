@@ -1,4 +1,4 @@
-stdsettings="--v3 --data --to 1500 --no-save-lemmas"
+stdsettings="--v3 --inv-templ 0 --grammar alterngram.smt2 --data --to 1500 --no-save-lemmas"
 
 [ -z "$freqhorn" ] && freqhorn="../build/tools/deep/freqhorn"
 

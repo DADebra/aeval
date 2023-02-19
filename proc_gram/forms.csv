@@ -1,36 +1,49 @@
 Benchmark,Form
-check_equal_set_flag_0,$\exists$
-collect_indices_equal_values_2,$\forall(\mathit{exp}\Rightarrow\exists)$
-collect_indices_equal_values_3,$\forall(\mathit{exp}\Rightarrow\exists)$
-copy_cust0,$\forall\exists$
-copy_nonzero_1,$\forall\exists$
-copy_positive_1,$\forall\exists$
-cust_swap,$\forall\exists$
-find1_3,$\exists$
-find1_2,$\mathit{exp}\Rightarrow\exists$
-find2_3,$\mathit{exp}\Rightarrow\exists$
-find_max_1,$\exists\Rightarrow\exists$
-find_max_local_0,$\forall(\forall\Rightarrow\exists)$
-find_max_local_1,$\forall\exists$
-find_max_up_to_1,$\forall\exists$
-find_max_from_second_1,$\mathit{exp}\Rightarrow\exists$
-find_min_1,$\exists\Rightarrow\exists$
-find_min_local_0,$\forall(\forall\Rightarrow\exists)$
-find_min_local_1,$\forall\exists$
-find_min_up_to_1,$\forall\exists$
-cust_init_add,$\forall\exists$
-merge_interleave_2,$\forall\exists$
-nonseq_0,$\forall\exists$
-nonseq_1,$\forall\exists$
-partition-harder_0,$\forall\exists$
-partition-harder_1,$\forall\exists$
-partition-harder_2,$\forall(\mathit{exp}\Rightarrow\exists)$
-partition-harder_3,$\forall(\mathit{exp}\Rightarrow\exists)$
-partition-harder_4,$\forall\exists$
-partition-harder_5,$\forall\exists$
-partition_2,$\forall\exists$
-partition_3,$\forall\exists$
-partition_4,$\forall(\mathit{exp}\Rightarrow\exists)$
-partition_5,$\forall(\mathit{exp}\Rightarrow\exists)$
-partition_6,$\forall\exists$
-str_len_0,$\exists\Rightarrow\forall$
+check_equal_set_flag_0,$\exists.b$
+collect_indices_equal_values_2,$\forall.(e \Rightarrow \exists.b)$
+collect_indices_equal_values_3,$\forall.(e \Rightarrow \exists.b)$
+copy_1,$\forall.\exists.b$
+copy_nonzero_1,$\forall.\exists.b$
+copy_positive_1,$\forall.\exists.b$
+count_occs_0,$\forall.((\forall.e) \Rightarrow b)$
+count_occs_1,$\forall.\exists.b$
+count_occs_2,$\forall.\exists.b$
+count_occs_3,$\forall.b$
+count_occs_4,$\forall.\forall.b$
+count_occs_5,$\forall.\forall.b$
+exists_0,$\forall.b$
+filter_0,$\forall.\exists.b$
+filter_1,$\forall.(e \Rightarrow \exists.b)$
+filter_quant_0,$\forall.\exists.b$
+filter_quant_1,$\forall.(e \Rightarrow \exists.b)$
+find1_2,$e \Rightarrow \exists.b$
+find1_3,$\exists.b$
+find2_3,$e \Rightarrow \exists.b$
+find_max_1,$(\exists.e) \Rightarrow \exists.b$
+find_max_local_0,$\forall.((\forall.e) \Rightarrow \exists.b)$
+find_max_local_1,$\forall.\exists.b$
+find_max_up_to_1,$\forall.\exists.b$
+find_max_from_second_1,$e \Rightarrow \exists.b$
+find_min_1,$(\exists.e) \Rightarrow \exists.b$
+find_min_local_0,$\forall.((\forall.e) \Rightarrow \exists.b)$
+find_min_local_1,$\forall.\exists.b$
+find_min_up_to_1,$\forall.\exists.b$
+init_add_0,$\forall.\exists.b$
+map_0,$\forall.\exists.b$
+merge_interleave_2,$\forall.\exists.b$
+mod_0,$\forall(e \Rightarrow \exists.b)$
+nonseq_0,$\forall.\exists.b$
+nonseq_1,$\forall.\exists.b$
+partition-harder_0,$\forall.\exists.b$
+partition-harder_1,$\forall.\exists.b$
+partition-harder_2,$\forall(e \Rightarrow \exists.b)$
+partition-harder_3,$\forall(e \Rightarrow \exists.b)$
+partition-harder_4,$\forall.\exists.b$
+partition-harder_5,$\forall.\exists.b$
+partition_2,$\forall.\exists.b$
+partition_3,$\forall.\exists.b$
+partition_4,$\forall(e \Rightarrow \exists.b)$
+partition_5,$\forall(e \Rightarrow \exists.b)$
+partition_6,$\forall.\exists.b$
+str_len_0,$(\exists.e) \Rightarrow \forall.b$
+swap_0,$\forall.\exists.b$

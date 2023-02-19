@@ -282,29 +282,29 @@ namespace ufo
 
     void assignPrioritiesForLearned(Sampl& s)
     {
-      if (s.b_part.empty())
-        lf.assignPrioritiesForLearned(s.l_part);
+      /*if (!s.b_part.empty())
+        bf.assignPrioritiesForLearned(s.b_part);*/
 
-      if (s.l_part.empty())
-        bf.assignPrioritiesForBlocked(s.b_part);
+      if (!s.l_part.empty())
+        lf.assignPrioritiesForLearned(s.l_part);
     }
 
     void assignPrioritiesForFailed(Sampl& s)
     {
-      if (s.b_part.empty())
-        lf.assignPrioritiesForFailed(s.l_part);
+      /*if (!s.b_part.empty())
+        bf.assignPrioritiesForFailed(s.b_part);*/
 
-      if (s.l_part.empty())
-        bf.assignPrioritiesForBlocked(s.b_part);
+      if (!s.l_part.empty())
+        lf.assignPrioritiesForFailed(s.l_part);
     }
 
     void assignPrioritiesForBlocked(Sampl& s)
     {
-      if (s.b_part.empty())
-        lf.assignPrioritiesForBlocked(s.l_part);
-
-      if (s.l_part.empty())
+      if (!s.b_part.empty())
         bf.assignPrioritiesForBlocked(s.b_part);
+
+      if (!s.l_part.empty())
+        lf.assignPrioritiesForBlocked(s.l_part);
     }
 
     void assignPrioritiesForLearned()

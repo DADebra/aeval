@@ -1,8 +1,8 @@
-stdsettings="--v3 --data --altern-ver 9 --to 1500 --no-save-lemmas"
+stdsettings="--v3 --data --altern-ver 9 --inv-templ 0 --grammar forallgram.smt2 --to 1500"
 
 [ -z "$freqhorn" ] && freqhorn="../build/tools/deep/freqhorn"
 
-to=30
+to=100
 
 cd "$(realpath "$(dirname "$0")")"
 
@@ -27,8 +27,14 @@ echo "Freqhorn: $freqhorn"
 dobench() {
     benchpath="$1"
     benchname="${benchpath#../bench_horn_rapid/}"
+    benchname="${benchname%.smt2}"
     echo "$benchname"
-    time -p timeout "$to" "$freqhorn" $stdsettings "$benchpath"
+    savelemmas=""
+    if [ "${benchname%_*}" = "array_altern_count_occs" ]
+    then
+      savelemmas="--save-lemmas"
+    fi
+    time -p timeout "$to" "$freqhorn" $stdsettings $savelemmas "$benchpath"
 }
 
 for bench in ../bench_horn_rapid/*.smt2

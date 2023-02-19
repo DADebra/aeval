@@ -103,9 +103,9 @@ NT Grammar::addNt(Expr ntFapp)
 
 bool Grammar::addProd(NT nt, Expr prod, mpq_class prio)
 {
-  if (find(_prods[nt].begin(), _prods[nt].end(), prod) != _prods[nt].end())
+  //if (find(_prods[nt].begin(), _prods[nt].end(), prod) != _prods[nt].end())
     // Production already added
-    return false;
+    //return false;
   _prods[nt].push_back(prod);
   _priomap[nt][prod] = prio;
   notifyListeners(ModClass::PROD, ModType::ADD);

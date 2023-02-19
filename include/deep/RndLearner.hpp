@@ -45,7 +45,7 @@ namespace ufo
 
     int invNumber;
     int numOfSMTChecks;
-    int queryInvNum;
+    int queryInvNum = -1;
 
     bool kind_succeeded;      // interaction with k-induction
     bool oneInductiveProof;
@@ -669,8 +669,6 @@ namespace ufo
       if (sw == 0)
         return cand;
 
-      assert(sw < 3);
-
       if (preConds.size() != 0)
       {
         if ((sw & 1) && preConds[invind])
@@ -1017,6 +1015,8 @@ namespace ufo
         // No lemmas in file
         return false;
 
+      lemmas = regularizeQF(lemmas);
+
       if (!isOpX<AND>(lemmas))
         // Just for ease of use; WON'T MARSHAL
         lemmas = mk<AND>(lemmas);
@@ -1049,8 +1049,8 @@ namespace ufo
         for (int x = 0; x < curCandidates[i]->arity(); ++x)
         {
           lms.insert(curCandidates[i]->arg(x));
-          sf.exprToSampl(curCandidates[i]->arg(x));
-          sf.assignPrioritiesForLearned();
+          //sf.exprToSampl(curCandidates[i]->arg(x));
+          //sf.assignPrioritiesForLearned();
         }
       }
 

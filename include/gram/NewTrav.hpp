@@ -541,7 +541,7 @@ class NewTrav : public Traversal
           continue;
 
         bool docontinue = false;
-        if (params.simplify && (prods.size() != 1 || !gram.isNt(prods[0])) &&
+        if (bool(params.simplify) && (prods.size() != 1 || !gram.isNt(prods[0])) &&
             !bool(isUnique(root, currdepth)))
           if (!oldCands[&travpos].insert(ret.toSortedExpr()).second)
           {

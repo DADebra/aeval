@@ -802,6 +802,18 @@ namespace ufo
     vars.push_back(e);
     return mknary<EXISTS>(vars);
   }
+
+  // Universally quantifies e with the given variables
+  Expr getForall(Expr e, ExprVector vars)
+  {
+    if (vars.size() == 0)
+      return e;
+    for (Expr &var : vars)
+      if (isOpX<FAPP>(var))
+        var = var->left();
+    vars.push_back(e);
+    return mknary<FORALL>(vars);
+  }
 }
 
 #endif

@@ -558,7 +558,7 @@ namespace ufo
         auto f = find(chcsToCheck2.begin(), chcsToCheck2.end(), i);
         if (f != chcsToCheck2.end())
         {
-          if (u.isFalse(h->body))
+          if (!containsOp<FORALL>(h->body) && u.isFalse(h->body))
           {
             if (debug >= 2)
               outs () << "  Eliminating CHC: " << h->srcRelation
@@ -577,7 +577,8 @@ namespace ufo
           found = true;
           for (int j = 0; j < h->srcVars.size(); j++)
           {
-            if (u.isSat(h->body, mkNeg(mk<EQ>(h->srcVars[j], h->dstVars[j]))))
+            if (!containsOp<FORALL>(h->body) &&
+                u.isSat(h->body, mkNeg(mk<EQ>(h->srcVars[j], h->dstVars[j]))))
             {
               found = false;
               break;

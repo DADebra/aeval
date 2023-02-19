@@ -1,5 +1,3 @@
-array_bubble_sort_rev.smt2
-array_bubble_sort.smt2
 array_copy_nondet_add.smt2
 array_double_inverse.smt2
 array_hybr_add.smt2

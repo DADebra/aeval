@@ -14,10 +14,15 @@ for line in open("rapidsucceeded.txt", "r"):
     rapidsucceeded.add(line)
 
 freqcsv = csv.reader(open(sys.argv[1], "r"))
+for l in freqcsv: break
 rapidcsv = csv.reader(open(sys.argv[2], "r"))
+for l in rapidcsv: break
 ourcsv = csv.reader(open(sys.argv[3], "r"))
+for l in ourcsv: break
 formscsv = csv.reader(open(sys.argv[4], "r"))
+for l in formscsv: break
 verscsv = csv.reader(open(sys.argv[5], "r"))
+for l in verscsv: break
 
 combined = dict()
 
@@ -60,7 +65,7 @@ for line in verscsv:
         combined[line[0]] = Result()
     combined[line[0]].minvers = line[1]
 
-print("Benchmark,FreqHornTimeSecs,RAPIDTimeSecs,QFixTimeSecs,Form,MinVers")
+#print("Benchmark,FreqHornTimeSecs,RAPIDTimeSecs,QFixTimeSecs,Form,MinVers")
 for k, v in combined.items():
     freqres = None
     rapidres = None
@@ -73,8 +78,10 @@ for k, v in combined.items():
     if v.rapidfailed == "1":
         if k in rapidsucceeded:
             rapidres = "\\checkmark"
-        else:
+        elif v.rapidtime != "?":
             rapidres = "\\cross"
+        else:
+            rapidres = v.rapidtime
     else:
         rapidres = v.rapidtime
 
@@ -83,7 +90,9 @@ for k, v in combined.items():
     else:
         ourres = v.ourtime
 
-    if not freqres or not rapidres or not ourres:
+    #if not freqres or not rapidres or not ourres:
+    #    continue
+    if not ourres:
         continue
 
-    print(f"{k},{freqres},{rapidres},{ourres},{v.form},{v.minvers}")
+    print(f"{k},{freqres},{rapidres},{ourres},{v.form}")
