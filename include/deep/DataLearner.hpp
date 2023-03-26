@@ -398,7 +398,7 @@ namespace ufo
 
     template <class CONTAINERT>
     int
-    getPolynomialsFromData(const arma::mat & data, CONTAINERT & cands, Expr inv, map<unsigned int, Expr>& monomialToExpr, Expr assume = nullptr)
+    getPolynomialsFromData(const arma::mat & data, CONTAINERT & cands, Expr inv, const ExprVector& invVars, map<unsigned int, Expr>& monomialToExpr, Expr assume = nullptr)
     {
       ExprSet polynomialsComputed;
       vector<arma::mat> basisComputed;
@@ -466,14 +466,21 @@ namespace ufo
       polynomials.reserve(basis.n_cols);
 
       if (!algExprFromBasis(basis, polynomials, monomialToExpr)) {
+        const ExprVector& srcVars = ruleManager.invVars[inv],
+                         &dstVars = ruleManager.invVarsPrime[inv];
         for (auto poly : polynomials) {
           Expr cand = (assume == nullptr) ? poly : mk<IMPL>(assume, poly);
+          cand = replaceAll(cand, dstVars, srcVars);
           if (polynomialsComputed.find(cand) == polynomialsComputed.end()) {
             addpolytocands(cands, cand);
             polynomialsComputed.insert(cand);
             printmsg(DEBUG, "Adding polynomial: ", cand);
           }
         }
+
+        //getAllEqs(inv, smtcands);
+        getAllIneqs(inv, invVars, cands);
+        //getSimplIneqs(inv, smtcands);
 
         computetime("poly conversion time ", start);
 
@@ -483,6 +490,129 @@ namespace ufo
       return 0;
 
     }
+
+    template <class CONTAINERT>
+    int getAllIneqs(const Expr& inv, const ExprVector& invVars, CONTAINERT& cands)
+    {
+      ExprVector cs, templlhs, optcs;
+      for (int i = 0; i < invVars.size(); ++i)
+      {
+        cs.push_back(mkConst(
+          mkTerm(string("__FH_c_")+to_string(i), m_efac), mk<INT_TY>(m_efac)));
+        templlhs.push_back(mk<MULT>(invVars[i], cs.back()));
+      }
+      optcs.push_back(mkConst(mkTerm(string("__FH_c_c"), m_efac), mk<INT_TY>(m_efac)));
+
+      Expr templ = mk<GT>(mknary<PLUS>(templlhs), optcs.back());
+      return fillTempl<LEQ>(inv, templ, cs, optcs, cands);
+    }
+
+    template <class CONTAINERT> 
+    int getSimplIneqs(const Expr& inv, const ExprVector& invVars, CONTAINERT& cands)
+    {
+      ExprVector cs, templlhs;
+      cs.push_back(mkConst(mkTerm(string("__FH_c_c"), m_efac), mk<INT_TY>(m_efac)));
+
+      Expr templgt = mk<GT>(mknary<PLUS>(invVars), cs.back());
+      Expr templlt = mk<LT>(mknary<PLUS>(invVars), cs.back());
+      return fillTempl<LEQ>(inv, templgt, cs, cands) +
+        fillTempl<GEQ>(inv, templlt, cs, cands);
+    }
+
+    template <class CONTAINERT>
+    int getAllEqs(const Expr& inv, const ExprVector& invVars, CONTAINERT& cands)
+    {
+      ExprVector cs, templlhs, optcs;
+      for (int i = 0; i < invVars.size(); ++i)
+      {
+        cs.push_back(mkConst(
+          mkTerm(string("__FH_c_")+to_string(i), m_efac), mk<INT_TY>(m_efac)));
+        templlhs.push_back(mk<MULT>(invVars[i], cs.back()));
+      }
+      optcs.push_back(mkConst(mkTerm(string("__FH_c_c"), m_efac), mk<INT_TY>(m_efac)));
+
+      Expr templ = mk<EQ>(mknary<PLUS>(templlhs), optcs.back());
+      return fillTempl<EQ>(inv, templ, cs, optcs, cands);
+    }
+
+    // Assumes `vars.back()` is the constant term.
+    template <typename OptimOp, class CONTAINERT>
+    int fillTempl(const Expr& inv, const Expr& templ, const ExprVector& vars,
+      const ExprVector& optvars, CONTAINERT& cands)
+    {
+      ExprVector foundconsts;
+      ExprUMap consts;
+      Expr unptempl = replaceAll(templ,
+        ruleManager.invVarsPrime[inv], ruleManager.invVars[inv]);
+      Expr zero = mkTerm<mpz_class>(0, m_efac);
+      //Expr notzero=mknary<OR>(ExprVector{mk<NEQ>(c1, zero), mk<NEQ>(c2, zero)});
+      consts = bnd.findConsts2<OptimOp>(inv, templ, ExprVector(), vars, optvars);
+      if (consts.empty())
+        return 0; // Nothing found, don't return
+      bool addcand = false;
+      for (const auto& var_val : consts)
+        if (find(optvars.begin(), optvars.end(), var_val.first) == optvars.end()&&
+            (!isOpX<MPZ>(var_val.second) ||
+           getTerm<mpz_class>(var_val.second) != 0))
+        { addcand = true; break; }
+      if (addcand)
+        cands.insert(cands.end(), replaceAll(unptempl, consts));
+      // Not doing all perms because I don't think it'll be worth it.
+      //function<void(ExprVector)> perm = [&] (ExprVector constrs)
+      ExprVector newconstrs;
+      ExprUSet newnotzero, failednotzero;
+      int found = 1;
+      while (true)
+      {
+        Expr pickedconst;
+        for (const auto& var_val : consts)
+          if (find(optvars.begin(), optvars.end(), var_val.first) == optvars.end() &&
+              isOpX<MPZ>(var_val.second) &&
+              getTerm<mpz_class>(var_val.second) == 0 &&
+              failednotzero.count(var_val.first) == 0 &&
+              newnotzero.insert(var_val.first).second)
+          {
+            pickedconst = var_val.first;
+            newconstrs.emplace_back(mk<NEQ>(var_val.first, zero));
+            break;
+          }
+        if (!pickedconst)
+          break;
+        consts = bnd.findNextConst(newconstrs);
+        if (!consts.empty())
+        {
+          ++found;
+          cands.insert(cands.end(), replaceAll(unptempl, consts));
+          //failednotzero.clear();
+        }
+        else
+        {
+          newconstrs.pop_back();
+          newnotzero.erase(pickedconst);
+          failednotzero.insert(pickedconst);
+        }
+      }
+      //auto ineq1 = findIneqs(inv, mk<MINUS>(invVars[0], invVars[1]), c);
+      return found;
+    }
+
+    // Returns <`lhs < rhs`, `lhs > rhs`>, either NULL if doesn't exist.
+    // `rhs` must be a variable (FAPP)
+    /*std::pair<Expr,Expr> findIneqs(const Expr& inv,
+      const Expr& lhs, const Expr& rhs)
+    {
+      assert(invVars.size() > 0);
+      if (invVars.size() > 1) // TODO: Current limitation
+        return std::pair<Expr,Expr>(NULL, NULL);
+
+      assert(IsConst()(rhs));
+      ExprSet vars{rhs};
+
+      ExprVector etrue = {mk<TRUE>(m_efac)};
+      auto lt = bnd.findConsts(inv, mk<LT>(lhs, rhs), etrue, vars);
+      auto gt = bnd.findConsts(inv, mk<GT>(lhs, rhs), etrue, vars);
+      return make_pair(lt[rhs], gt[rhs]);
+    }*/
 
   public:
 
@@ -495,21 +625,25 @@ namespace ufo
       LOG_LEVEL = l;
     }
 
-    map <Expr, vector< vector<double> > > exprToModels;
-    map <Expr, ExprVector> invVars;
+    map <Expr, vector< vector<double> > > exprToModelsUnp, exprToModelsP;
+    map <Expr, ExprVector> invVarsUnp, invVarsP;
 
     bool computeData(map<Expr, ExprVector>& arrRanges, map<Expr, ExprSet>& constr)
     {
-      exprToModels.clear();
-      invVars.clear();
-      return bnd.unrollAndExecuteMultiple(invVars, exprToModels, arrRanges, constr);
+      exprToModelsUnp.clear();
+      exprToModelsP.clear();
+      invVarsUnp.clear();
+      invVarsP.clear();
+      return bnd.unrollAndExecuteMultiple(invVarsUnp, invVarsP, exprToModelsUnp, exprToModelsP, arrRanges, constr);
     }
 
     void computeDataSplit(Expr srcRel, Expr splitter, Expr invs, bool fwd, ExprSet& constr)
     {
-      exprToModels.clear();
-      invVars.clear();
-      bnd.unrollAndExecuteSplitter(srcRel, invVars[srcRel], exprToModels[srcRel], splitter, invs, fwd, constr);
+      exprToModelsUnp.clear();
+      exprToModelsP.clear();
+      invVarsUnp.clear();
+      invVarsP.clear();
+      bnd.unrollAndExecuteSplitter(srcRel, invVarsP[srcRel], exprToModelsP[srcRel], splitter, invs, fwd, constr);
     }
 
     ExprSet& getConcrInvs(Expr rel) { return bnd.concrInvs[rel]; }
@@ -520,23 +654,29 @@ namespace ufo
     computePolynomials(Expr inv, CONTAINERT & cands)
     {
       CONTAINERT tmp;
-      while (!exprToModels[inv].empty())
+      const int maxIsP = (invVarsUnp == invVarsP) ? 2 : 1;
+      for (int isP = 0; isP < maxIsP; ++isP)
       {
-        arma::mat dataMatrix;
-        for (auto model : exprToModels[inv]) {
-          arma::rowvec row = arma::conv_to<arma::rowvec>::from(model);
-          row.insert_cols(0, arma::rowvec(1, arma::fill::ones));
-          dataMatrix.insert_rows(dataMatrix.n_rows, row);
-        }
+        auto& exprToModels = isP ? exprToModelsP : exprToModelsUnp;
+        auto& invVars = isP ? invVarsP : invVarsUnp;
+        while (!exprToModels[inv].empty())
+        {
+          arma::mat dataMatrix;
+          for (auto model : exprToModels[inv]) {
+            arma::rowvec row = arma::conv_to<arma::rowvec>::from(model);
+            row.insert_cols(0, arma::rowvec(1, arma::fill::ones));
+            dataMatrix.insert_rows(dataMatrix.n_rows, row);
+          }
 
-        map<unsigned int, Expr> monomialToExpr;
-        if (0 == initInvVars(inv, invVars[inv], monomialToExpr)) return;
-        initLargeCoeffToExpr(dataMatrix);
-        getPolynomialsFromData(dataMatrix, tmp, inv, monomialToExpr);
-        if (tmp.size() > 0) break;
-        else exprToModels[inv].pop_back();
+          map<unsigned int, Expr> monomialToExpr;
+          if (0 == initInvVars(inv, invVars[inv], monomialToExpr)) return;
+          initLargeCoeffToExpr(dataMatrix);
+          getPolynomialsFromData(dataMatrix, tmp, inv, invVars[inv], monomialToExpr);
+          if (tmp.size() > 0) break;
+          else exprToModels[inv].pop_back();
+        }
+        cands.insert(tmp.begin(), tmp.end());
       }
-      cands.insert(tmp.begin(), tmp.end());
     }
   };
 }

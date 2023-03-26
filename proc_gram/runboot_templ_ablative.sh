@@ -1,4 +1,4 @@
-stdsettings="--v3 --inv-templ 0 --data --to 1500 --no-save-lemmas"
+stdsettings="--v3 --inv-templ 0 --data --to 1500 --nosimpl --no-save-lemmas"
 
 [ -z "$freqhorn" ] && freqhorn="../build/tools/deep/freqhorn"
 
@@ -31,8 +31,8 @@ dobench() {
     time -p timeout "$to" "$freqhorn" --altern-ver "$alternver" --grammar tmptemplgram.smt2 $stdsettings "$benchpath"
 }
 
-for ver in $(cat ./altern-vers.txt)
-do
+dover() {
+    ver=$1
     ln -sf log-boottempl-abl-$ver-$nowtime.txt logs/log-boottempl-abl-$ver-latest.txt
     exec > logs/log-boottempl-abl-$ver-$nowtime.txt 2>&1
 
@@ -49,4 +49,14 @@ do
         dobench "$ver" "$benchname"
     done
     date
-done
+}
+
+if [ $# -eq 1 ]
+then
+    dover "$1"
+else
+  for ver in $(cat ./altern-vers.txt)
+  do
+      dover "$ver"
+  done
+fi

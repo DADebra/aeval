@@ -15,8 +15,8 @@
   PROP
 )))
 (assert (= PROP
-  (forall ((favar Int)) (=>
-    (= (select _FH_inv_0 favar) (select _FH_inv_1 favar))
+  (=>
+    (and (<= 0 _FH_inv_4) (distinct _FH_inv_2 _FH_inv_4))
     (exists ((exvar Int)) DEF_CANDS)
-  ))
+  )
 ))

@@ -1,4 +1,4 @@
-stdsettings="--v3 --data --altern-ver 9 --inv-templ 0 --grammar forallgram.smt2 --to 1500"
+stdsettings="--v3 --data --altern-ver 9 --inv-templ 0 --nosimpl --grammar forallgram.smt2 --to 1500"
 
 [ -z "$freqhorn" ] && freqhorn="../build/tools/deep/freqhorn"
 

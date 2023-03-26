@@ -113,6 +113,12 @@ namespace ufo
       }
     }
 
+    void reset()
+    {
+      if (m != NULL) { free(m); m = NULL; }
+      smt.reset();
+    }
+
     template <typename T> boost::tribool isSat(T& cnjs, bool reset=true)
     {
       if (m != NULL) { free(m); m = NULL; }

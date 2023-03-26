@@ -1,4 +1,4 @@
-stdsettings="--v3 --altern-ver 9 --to 1500 --no-save-lemmas --inv-templ 0 --grammar lemmas-gram.smt2"
+stdsettings="--v3 --altern-ver 9 --to 1500 --no-save-lemmas --nosimpl --inv-templ 0 --grammar lemmas-gram.smt2"
 
 freqhorn="../build/tools/deep/freqhorn"
 

@@ -1021,13 +1021,13 @@ namespace ufo
           assignPrioritiesForLearned();
           generalizeArrInvars(invNum, sf);
 
-          for (const Expr& newpost : newposts)
+          /*for (const Expr& newpost : newposts)
           {
             if (!addCandidate(queryInvNum, newpost))
               continue;
-            if (checkCand(invNum))
+            if (checkCand(invNum, alternver < 0))
               assignPrioritiesForLearned();
-          }
+          }*/
 
           if (checkAllLemmas())
           {
@@ -1710,8 +1710,8 @@ namespace ufo
       bool doupper = hasconstarr || invNumber > 1;
 
       ExprUSet range_arrs_set;
-      auto arrfilter = [&] (const Expr &e) -> bool
-      {return IsConst()(e) && isOpX<ARRAY_TY>(typeOf(e));};
+      /*auto arrfilter = [&] (const Expr &e) -> bool
+      {return IsConst()(e) && isOpX<ARRAY_TY>(typeOf(e));};*/
 
       // Find the array the range is using
       Expr loopbody, initbody, querybody, initrel;
@@ -1723,12 +1723,16 @@ namespace ufo
         return mk<TRUE>(m_efac);
       }));
 
+      for (const Expr& v : ruleManager.invVars[inv])
+        if (isOpX<ARRAY_TY>(typeOf(v)))
+          range_arrs_set.insert(v);
+
       for (const auto& chc : ruleManager.chcs)
       {
         if (chc.isInductive && chc.srcRelation == inv)
         {
-          filter(chc.body, arrfilter,
-            inserter(range_arrs_set, range_arrs_set.begin()));
+          /*filter(chc.body, arrfilter,
+            inserter(range_arrs_set, range_arrs_set.begin()));*/
           loopLocVars.insert(chc.dstVars.begin(), chc.dstVars.end());
           Expr tmpbody = dagVisit(quantrw, chc.body);
           if (loopbody)
@@ -1744,8 +1748,8 @@ namespace ufo
             if (saveret) _grvCache[key] = out;
             return std::move(out);
           }
-          filter(chc.body, arrfilter,
-            inserter(range_arrs_set, range_arrs_set.begin()));
+          /*filter(chc.body, arrfilter,
+            inserter(range_arrs_set, range_arrs_set.begin()));*/
           initbody = replaceAll(chc.body, chc.dstVars, invarVarsShort[invNum]);
           if (!chc.isFact)
             initbody = ufo::eliminateQuantifiers(initbody, chc.srcVars);
@@ -1759,8 +1763,8 @@ namespace ufo
             if (saveret) _grvCache[key] = out;
             return std::move(out);
           }
-          filter(chc.body, arrfilter,
-            inserter(range_arrs_set, range_arrs_set.begin()));
+          /*filter(chc.body, arrfilter,
+            inserter(range_arrs_set, range_arrs_set.begin()));*/
           querybody = ufo::eliminateQuantifiers(chc.body, chc.dstVars);
           querybody = ufo::eliminateQuantifiers(querybody, chc.locVars);
           querybody = removeVars(querybody, chc.locVars);
@@ -1957,6 +1961,8 @@ namespace ufo
                 varp_def = varp_def->last();
               if (isOpX<EQ>(varp_def) && varp_def->left() == tmpvar)
                 varp_def = varp_def->right();
+              else if (isOpX<EQ>(varp_def) && isOpX<UN_MINUS>(varp_def->left()) && varp_def->left()->left() == tmpvar)
+                varp_def = mk<UN_MINUS>(varp_def->right());
               else
                 varp_def = varp; // TODO: Might not be correct
               Expr inddiff = mk<MINUS>(varp_def, var);
@@ -1978,6 +1984,8 @@ namespace ufo
                 varlo_def = varlo_def->last();
               if (isOpX<EQ>(varlo_def) && varlo_def->left() == tmpvar)
                 varlo_def = varlo_def->right();
+              else if (isOpX<EQ>(varlo_def) && isOpX<UN_MINUS>(varlo_def->left()) && varlo_def->left()->left() == tmpvar)
+                varlo_def = mk<UN_MINUS>(varlo_def->right());
               else
                 varlo_def = var; // Non-deterministic variable
 
@@ -2059,11 +2067,12 @@ namespace ufo
 
             Expr lhs = mk<AND>(lms, loopbody);
             bool orderingFailed = false;
+            bool rev = false;
 
             if (!u.isSat(lhs, mk<LT>(pboundhi, boundlo)))
             {}
             else if (!u.isSat(lhs, mk<GT>(pboundhi, boundlo)))
-            { swap(boundhi, boundlo); }
+            { swap(boundhi, boundlo); rev = true; }
             else
             {
               cout << "Bootstrap: Failed to order bounds: l=" << boundlo
@@ -2080,9 +2089,16 @@ namespace ufo
 
             Expr boundup = NULL;
             if (doupper)
-              boundup = ufo::eliminateQuantifiers(
-                mk<AND>(mkNeg(noprimed_body), mk<GEQ>(qvar, tmpiter)),
-                itervars);
+            {
+              if (!rev)
+                boundup = ufo::eliminateQuantifiers(
+                  mk<AND>(mkNeg(noprimed_body), mk<GEQ>(qvar, tmpiter)),
+                  itervars);
+              else
+                boundup = ufo::eliminateQuantifiers(
+                  mk<AND>(mkNeg(noprimed_body), mk<LEQ>(qvar, tmpiter)),
+                  itervars);
+            }
             if (doupper && (!boundup || isOpX<FALSE>(boundup)))
               cout << "Bootstrap: Failed to find upper for "<<tmpiter<<endl;
             else if (boundup)
@@ -2121,8 +2137,11 @@ namespace ufo
 
             if (boundup && doupper && !orderingFailed)
             {
-              Expr newregrange =
-                mk<AND>(mk<GT>(qvar, boundhi), boundup);
+              Expr newregrange;
+              if (!rev)
+                newregrange = mk<AND>(mk<GT>(qvar, boundhi), boundup);
+              else
+                newregrange = mk<AND>(mk<LT>(qvar, boundlo), boundup);
 
               if (regranges[i])
                 regranges[i] = mk<OR>(regranges[i], newregrange);
@@ -2609,7 +2628,7 @@ namespace ufo
       ExprVector ret(1);
 
       Expr newpost = NULL;
-      ExprVector loopbodies;
+      ExprVector srcbodies;
       const ExprVector *locvars = NULL;
       // Find query body and loops
       Expr queryrel;
@@ -2623,16 +2642,20 @@ namespace ufo
           locvars = &chc.locVars;
           queryrel = chc.srcRelation;
         }
-        else if (chc.isInductive)
-          loopbodies.push_back(chc.body);
+      for (const auto& chc : ruleManager.chcs)
+        if (chc.dstRelation == queryrel)
+          srcbodies.push_back(chc.body);
+
       if (isOpX<AND>(newpost))
       {
         // Strip loop condition
         ExprVector newpost_newargs;
         for (int i = 0; i < newpost->arity(); ++i)
-          for (const Expr& body : loopbodies)
+        {
+          bool shoulddiscard = false;
+          for (const Expr& body : srcbodies)
           {
-            bool shoulddiscard = false;
+            if (shoulddiscard) continue;
             if (isOpX<AND>(body))
             {
               for (int j = 0; j < body->arity(); ++j)
@@ -2641,9 +2664,10 @@ namespace ufo
             }
             else if (u.isEquiv(mkNeg(newpost->arg(i)), body))
               shoulddiscard = true;
-            if (!shoulddiscard)
-              newpost_newargs.push_back(newpost->arg(i));
           }
+          if (!shoulddiscard)
+            newpost_newargs.push_back(newpost->arg(i));
+        }
         newpost = conjoin(newpost_newargs, m_efac);
       }
 
@@ -2826,7 +2850,7 @@ namespace ufo
           return;
         }
         for (int i = 0; i < quants.size(); ++i)
-          for (int j = 0; j < quantAssigns[i].size() - 1; ++j)
+          for (int j = 0; j < quantAssigns[i].size(); ++j)
             if (quantAssigns[i][j] == stockAssigns[i][j])
             {
               quantAssigns[i][j] = qvs[pos];
@@ -3259,7 +3283,7 @@ namespace ufo
               if (dAddProp)                  // for QE-based propagation, the heuristic is disabled
                 deferredCandidates[invNum].push_back(cand);
                                              // otherwise, prioritize equality cands with closed ranges
-              else if (isOpX<EQ>(c) && getQvit(invNum, bind::fapp(cand->arg(0)))->closed)
+              else if (isOpX<EQ>(c) && getQvit(invNum, bind::fapp(cand->arg(0))) && getQvit(invNum, bind::fapp(cand->arg(0)))->closed)
                 deferredCandidates[invNum].push_back(cand);
               else
                 deferredCandidates[invNum].push_front(cand);

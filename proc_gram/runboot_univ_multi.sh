@@ -1,8 +1,8 @@
-stdsettings="--v3 --altern-ver 9 --data --grammar forallgram.smt2 --to 1500 --no-save-lemmas --inv-templ 0"
+stdsettings="--v3 --altern-ver 9 --data --grammar forallgram.smt2 --nosimpl --to 1500 --no-save-lemmas --nosimpl --inv-templ 0"
 
 [ -z "$freqhorn" ] && freqhorn="../build/tools/deep/freqhorn"
 
-to=30
+to=60
 
 cd "$(realpath "$(dirname "$0")")"
 
