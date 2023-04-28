@@ -1,27 +1,57 @@
-FreqHorn
-========
+# README
 
-Satisfiability solver for constrained Horn clauses (CHC) based on <a href="https://github.com/Z3Prover/z3">Z3</a> SMT solver. It combines syntax-guided methods to inductive invariant synthesis with data learning and quantified reasoning over arrays. Find more details at <a href="http://www.cs.fsu.edu/~grigory/freqhorn-arrays.pdf">CAV'19</a> and <a href="http://www.cs.fsu.edu/~grigory/multi-freqhorn.pdf">FMCAD'18</a> papers.
+## Running the Tool
+With no extra options the tool defaults to stock FreqHorn,
+i.e. none of our bootstrapped candidates or data-learned ones.
 
-Installation
-============
+For the highest version of the algorithm, run the following:
+```
+./build/tools/deep/freqhorn --data --altern-ver 9 --grammar ./proc_gram/forallgram.smt2 <input_file>
+```
 
-Compiles with gcc-7 (on Linux) and clang-1001 (on Mac). Assumes preinstalled <a href="https://gmplib.org/">GMP</a>, and Boost (libboost-system1.74-dev) packages. Additionally, armadillo package to get candidates from behaviors. 
+This will enable the full range calculation, data-learned candidates,
+and use a basic universally-quantified template.
+This is how we evaluate on the benchmarks in `bench_horn`.
 
-* `cd aeval ; mkdir build ; cd build`
-* `cmake ../`
-* `make` to build dependencies (Z3)
-* `make` (again) to build FreqHorn
+We also support the following other constants for `--altern-ver`:
 
-The binary of FreqHorn can be found at `build/tools/deep/`.
-Run `freqhorn --help` for the usage info.
+ 0. Just tries the property as-is, without lemmas from syntax or data.
+    Doesn't need `--grammar` or `--data` option.
+ 1. Property as-is but with lemmas from syntax.
+    Doesn't need `--grammar` or `--data` option.
+ 2. Lemmas from syntax and data but without the property, using a simpler
+    form of the range algorithm which just uses the expression in `store` as-is.
+    Needs both `--grammar` and `--data` options.
+ 3. Lemmas from syntax and data w/o property with full form of range algorithm.
+    Needs both `--grammar` and `--data` options.
+ 4. Doesn't currently do anything, though it was intended to add
+    disjunctive candidates to Version 3.
+ 5. Lemmas from syntax, data, and property with full range algorithm.
+    Needs both `--grammar` and `--data` options.
 
-FreqHorn does not automatically find counterexamples (unless the CHC system can be trivially simplified), but its supplementary tool `expl` tool does. We recommend running `freqhorn` and `expl` concurrently.
+## Shell scripts
+We provide the following shell scripts in `/proc_gram` to ease running
+sets of experiments.
+They all produce output in `/proc_gram/logs`, named accordingly.
+These logs can all be processed by `/proc_gram/process_logs.py`, taking
+the log file as the only argument and returning a CSV.
 
-The tools print `Success ...` if the system is satisfiable.
-
-Benchmarks
-==========
-
-Collection of the SMT-LIB2 translations of the satisfiable CHC system can be found at `bench_horn` and `bench_horn_multiple`. FreqHorn is expected to eventually discover solutions for the systems. On the other hand, there are several unsatisfiable CHC systems at `bench_horn_cex`, for which `freqhorn` is expected to diverge (but `expl` should find counterexamples).
-
+ - `runboot.sh` -- Runs the highest version of the approach on all benchmarks
+   in /bench\_horn\_rapid (mostly containing alternating-quantifier properties)
+   with `forallgram.smt2`, logs named `log-boot-<date>.txt`.
+ - `runboot_ablative.sh` -- Like `runboot.sh` but runs for each version
+   listed above, logs named `log-boot-abl-<vers>-<date>.txt`.
+   Process logs of all versions at once with `/proc_gram/process_ablative.sh`.
+ - `runboot_templ.sh` -- Runs the highest version of the approach on all benchmarks
+   in /bench\_horn\_rapid (mostly containing alternating-quantifier properties)
+   with a specialized template for each one (in `/proc\_gram/templgrams`),
+   logs named `log-boottempl-<date>.txt`.
+ - `runboot_templ_ablative.sh` -- Like `runboot_templ.sh` but runs for each version
+   listed above, logs named `log-boottempl-abl-<vers>-<date>.txt`.
+   Process logs of all versions at once with `/proc_gram/process_ablative_templ.sh`.
+ - `runboot_univ.sh` -- Runs the highest version of the approach on the
+   benchmarks in /bench\_horn\_rapid (containing single-quantifier properties)
+   listed in `proc\_gram/cav19-benches.txt`, logs named `log-bootuniv-<date>.txt`.
+ - `runboot_univ_ablative.sh` -- Like `runboot_univ.sh` but runs for each version
+   listed above, logs named `log-boottempl-abl-<vers>-<date>.txt`.
+   Process logs of all versions at once with `/proc_gram/process_ablative_univ.sh`.
