@@ -1691,11 +1691,16 @@ namespace ufo
     }
 #endif
 
-    // Output: K: Array, V: Full new range(s)
+    // K: Array, V: Full new range(s)
     typedef unordered_map<Expr,ExprVector> GetRangesRet;
     ExprUMap rngvars; // K: Type, V: Variable
     unordered_map<Expr,GetRangesRet> _grvCache;
     unordered_set<Expr> _grvFailed;
+    // Returns { array var -> (progress range, regress range, full range) }
+    //   for the given relation, for all array variables in that relation.
+    //
+    // Regress and full ranges only returned if program contains a
+    //   const array or multiple loops.
     GetRangesRet getRangesAll(Expr inv)
     {
       bool saveret = true;
@@ -2182,7 +2187,9 @@ namespace ufo
       return std::move(out);
     }
 
-    GetRangesRet getRanges(Expr fullpost, Expr qvar, Expr inv)
+    // Returns same as `getRangesAll`, but rewrites it so the inequalities
+    //   are over `qvar` instead.
+    GetRangesRet getRanges(Expr inv, Expr qvar)
     {
       auto out = getRangesAll(inv);
       for (auto& kv : out)
@@ -2298,6 +2305,14 @@ namespace ufo
       return false;
     }
 
+    // For each array given in `ranges`:
+    //   Surrounds each `select` with the range corresponding to its
+    //   array. We consider the smallest boolean expression containing
+    //   the select, e.g. 'a[i] == 4 /\ x < 4' will only have the
+    //   first conjunct covered with the range for 'a'.
+    //   Implications, disjunctions, and varying quantifiers should
+    //   be handled properly.
+    // Returns <permutations of ranges, unused>.
     std::pair<ExprVector,Expr> coverWithRange(Expr e, const GetRangesRet& ranges,
       Expr qvar, bool isneg = false)
     {
@@ -2555,7 +2570,7 @@ namespace ufo
 
     ExprVector synthAERange(Expr post, Expr qvar, Expr inv)
     {
-      return coverWithRange(post, getRanges(post, qvar, inv), qvar).first;
+      return coverWithRange(post, getRanges(inv, qvar), qvar).first;
       /*vector<ExprVector> newargs;
       if (isLit(post) || isOpX<FDECL>(post))
         return ExprVector{post};
@@ -2623,6 +2638,8 @@ namespace ufo
     }
 #endif
 
+    // Takes property and performs the core heuristic of range substitution.
+    // Returns a vector of potential candidates.
     ExprVector generalizeArrQuery()
     {
       ExprVector ret(1);
@@ -2696,6 +2713,7 @@ namespace ufo
       ExprVector qvars;
       orderedQVars(newpost, qvars);
 
+      // Rewrite ranges
       function<void(Expr,ExprVector::const_iterator)> perm = [&] (Expr e, ExprVector::const_iterator pos)
       {
         if (pos == qvars.end())
@@ -2715,6 +2733,8 @@ namespace ufo
       return std::move(ret);
     }
 
+    // Returns all quantified variables within `e` (recursing for nested
+    //   quantifiers) in pre-order.
     void orderedQVars(Expr e, ExprVector& qvars)
     {
       if (isOpX<FORALL>(e) || isOpX<EXISTS>(e))
@@ -2727,6 +2747,8 @@ namespace ufo
         orderedQVars(e->arg(i), qvars);
     }
 
+    // Add ranges to a candidate `cand` that has none.
+    // Returns a vector of candidates: permutations of all possible ranges.
     ExprVector alternAddRanges(Expr cand, Expr inv)
     {
       //ExprUMap qvars;
@@ -2749,6 +2771,9 @@ namespace ufo
       return std::move(ret);
     }
 
+    // Version of CheckCand that we use while for checking the output
+    //   of `generalizeArrQuery`.
+    // Used to be used for more, probably not needed now.
     bool bootstrapCheckCand(Expr cand, int invNum, bool isnewpost = false)
     {
       if (printLog)
@@ -2777,6 +2802,8 @@ namespace ufo
       return false;
     }
 
+    // Returns all quantified expressions found in `e`, in pre-order,
+    //   recursing for nested quantifiers.
     void orderedQuants(const Expr& e, ExprVector &quants)
     {
       if (isOpX<FORALL>(e) || isOpX<EXISTS>(e))
@@ -2789,6 +2816,17 @@ namespace ufo
           orderedQuants(e->arg(i), quants);
     }
 
+    // Returns permutations of matches from the variables in `qvits` to
+    //   the the quantified variables in `cand`.
+    // This is run after we've put the guessed body in the template,
+    //   so the variables don't match yet.
+    //
+    // E.g.: (forall ((x Int)) (exists ((y Int)) (= _FH_it_0 _FH_it_1)))
+    // will return:
+    //   (forall ((_FH_it_0 Int) (_FH_it_1 Int)) (= _FH_it_0 _FH_it_1)),
+    //   (exists ((_FH_it_0 Int) (_FH_it_1 Int)) (= _FH_it_0 _FH_it_1)),
+    //   (forall ((_FH_it_0 Int)) (exists ((_FH_it_1 Int)) (= _FH_it_0 _FH_it_1))),
+    //   (forall ((_FH_it_1 Int)) (exists ((_FH_it_0 Int)) (= _FH_it_0 _FH_it_1)))
     ExprVector alternMatchQuants(Expr cand, int invNum)
     {
       ExprUSet qiters;
@@ -2805,10 +2843,6 @@ namespace ufo
       orderedQuants(cand, quants);
       if (quants.size() == 0)
         return ExprVector{cand};
-      /*vector<int> quantArities(quants.size());
-      for (int i = 0; i < quantArities.size(); ++i)
-        for (int j = 0; j < quants[i]->arity() - 1; ++j)
-          if (contains(quants[i], quants[i]->arg(j)))*/
       vector<ExprVector> quantAssigns(quants.size()), stockAssigns(quants.size());
       Expr emptyqvar;
       for (int i = 0; i < quantAssigns.size(); ++i)
@@ -2827,6 +2861,8 @@ namespace ufo
           ExprUMap newquants;
           for (int i = quantAssigns.size() - 1; i >= 0; --i)
           {
+            // I had bugs where quantifiers were invalidally getting skipped,
+            //   so just comment out for now.
             /*bool doquant = false;
             for (int j = 0; j < quantAssigns[i].size(); ++j)
               if (quantAssigns[i][j] != stockAssigns[i][j]) { doquant = true; break; }
@@ -2864,6 +2900,9 @@ namespace ufo
       return std::move(ret);
     }
 
+    // Returns all permutations of surrounding `cand` with quantifiers,
+    //   where each variable in `qvits` in `cand` is tried both
+    //   existentially and universally quantified.
     ExprVector alternTryQuants(Expr cand, int invNum)
     {
       ExprUSet qiters;
@@ -2897,6 +2936,7 @@ namespace ufo
       return std::move(ret);
     }
 
+    // Used to do more, currently just copies over `arrCands` into `bootCands`.
     bool alternGenDataCands()
     {
       /*map<Expr,ExprSet> nonArrCands;
@@ -2925,6 +2965,7 @@ namespace ufo
       return false;
     }
 
+    // Attempted heuristics for finding candidates.
 #if 0
     ExprVector getBoolExprs()
     {
@@ -3018,6 +3059,9 @@ namespace ufo
     }
 #endif
 
+    // This bootstrapping done before we do `initializeAux`,
+    //   which can take a while sometimes.
+    // Run before all relations are intialized.
     ExprVector newposts;
     bool bootstrap1()
     {
@@ -3041,20 +3085,6 @@ namespace ufo
         }
 
         if (!dDisj) simplifyLemmas();
-
-        /*for (const auto& kv : deferredCandidates)
-          candidates[kv.first].insert(candidates[kv.first].end(),
-            kv.second.begin(), kv.second.end());
-        if (multiHoudini(ruleManager.dwtoCHCs))
-        {
-          assignPrioritiesForLearned();
-          if (checkAllLemmas())
-          {
-            outs () << "Success after bootstrapping\n";
-            printSolution();
-            return true;
-          }
-        }*/
       }
 
       if (alternver >= 0)
@@ -3075,7 +3105,9 @@ namespace ufo
 
       return false;
     }
-    
+   
+    // More bootstrapping done after `initializeAux` and all relations
+    //   initialized.
     bool bootstrap2()
     {
       for (const auto& kv : candidates)
@@ -3126,27 +3158,10 @@ namespace ufo
         if (alternver >= 2 && alternGenDataCands())
           return true;
 
-        /*if (alternver >= 5 || alternver < 2)
-          for (const Expr& newpost : newposts)
-            deferredCandidates[queryInvNum].push_front(newpost);*/
+        // Code that used to compute implicative candidates.
+        // I'm now just doing these with a grammar instead.
 
-        /*for (int invNum = 0; invNum < invNumber; ++invNum)
-        {
-          const auto& sf = sfs[invNum].back();
-          if (sf.gf.initialized)
-            continue;
-          ostringstream autogram;
-          autogram << "(declare-fun ANY_INV () Bool)\n" <<
-            "(assert (= ANY_INV (either_inorder\n" <<
-            "  (forall ((unused Int)) DEF_CANDS)\n" <<
-            "  (forall ((unused Int)) (=> DEF_CANDS DEF_CANDS))\n";
-          if (invNum == queryInvNum)
-          {
-            autogram << "  ";
-            //coverWithRange
-          }
-        }*/
-
+#if 0
         /*for (int invNum = 0; invNum < invNumber; ++invNum)
         {
           ExprUSet implpartsset;
@@ -3168,8 +3183,6 @@ namespace ufo
             implparts.begin(), implparts.end());
         }*/
 
-
-#if 0
         if (alternver >= 4)
         {
           //ExprVector bexprs = getBoolExprs();

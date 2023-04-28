@@ -621,8 +621,13 @@ namespace ufo
     }
 
     unordered_map<Expr,ExprVector> lastssa;
-    //used for multiple loops to unroll inductive clauses k times and collect corresponding models
     typedef vector<vector<double>> DMat;
+    //used for multiple loops to unroll inductive clauses k times and collect corresponding models
+    //
+    //  `invVarsUnp` is {rel -> unprimed variables and selects of arrays}
+    //  `invVarsP` is {rel -> unprimed variables and selects of primed arrays}
+    //  `modelsUnp` is {rel -> models for vars in `invVarsUnp`}
+    //  `modelsP` is {rel -> models for vars in `invVarsP`}
     bool unrollAndExecuteMultiple(
           map<Expr, ExprVector>& invVarsUnp, map<Expr, ExprVector>& invVarsP,
 	  map<Expr, DMat> & modelsUnp, map<Expr, DMat>& modelsP,
@@ -885,6 +890,24 @@ namespace ufo
       return res;
     }
 
+    // (Maybe) Finds an assignment to the variables listed in `vars`
+    //   which satisfy the constraint listed in `constr`,
+    //   where `constr` must hold on each step of the unrolling
+    //   (i.e. we duplicate `constr` for each row of SSA and conjoin to SSA).
+    // 
+    // This version additionally tries to optimize the variables given
+    //   in `optvars` according to the template parameter `OptimOp`
+    //   (an ExprOp). If no optimal candidate is found, returns an
+    //   unoptimal one.
+    //
+    // `inv` is the predicate to consider.
+    // `extraconstr` is an additional set of constraints (not duplicated
+    // over SSA) to add to the problem, over `vars`.
+    //
+    // Returns a model (v \in vars -> Expr) if one found, or an empty
+    // map otherwise.
+    //
+    // Must be called after `unrollAndExecuteMultiple()`.
     ExprVector vardst, varsrc;
     template <typename OptimOp, typename Range>
     ExprUMap findConsts2(const Expr& inv, const Expr& constr,
@@ -903,8 +926,10 @@ namespace ufo
         bndconstr[i] = replaceAll(constr, srcVars, bvars[i]);
         bndconstr[i] = replaceAll(bndconstr[i], dstVars, bvars[i+1]);
       }
+      // All rows of rewritten `constr`.
       Expr allbndconstr = conjoin(bndconstr, m_efac);
       Expr alllastssa = conjoin(lastssa[inv], m_efac);
+      // Note lack of universal quantifier.
       Expr tocheck = mk<AND>(allbndconstr, alllastssa);
       ExprVector faArgs;
       ExprVector freshvars;
@@ -916,44 +941,54 @@ namespace ufo
       for (const Expr& v : optvars)
       {
         faArgs.push_back(v->left());
+        // Create a fresh variable for each optimized variable.
+        // This will be the one we look for in the model, with the intention
+        //   being that it is smaller/bigger than all `v` that satsify
+        //   `constr`.
         freshvars.push_back(mkConst(
           mkTerm(getTerm<string>(v->left()->left())+"!", m_efac),
           v->left()->last()));
         varsrc.push_back(freshvars.back());
         vardst.push_back(v);
       }
-      ExprVector optconsteq, optconstop;
+      ExprVector optconstop;
       for (int i = 0; i < freshvars.size(); ++i)
       {
-        optconsteq.push_back(mk<EQ>(freshvars[i], mk<FAPP>(faArgs[i])));
+        // c! < c (for OptimOp == LT)
         optconstop.push_back(mk<OptimOp>(freshvars[i], mk<FAPP>(faArgs[i])));
       }
 
+      // The SMT solver we use for non-optimizing checks.
       constsmt.reset();
+      // (all rows of constr) /\ (all rows of SSA)
       constsmt.assertExpr(tocheck);
+      // \foreach{v \in optvars}. v! < v
       constsmt.assertExpr(conjoin(optconstop, m_efac));
 
       faArgs.push_back(mk<IMPL>(allbndconstr, conjoin(optconstop, m_efac)));
+      // \foreach{v \in optvars}. \exists{v!}. \forall{v}. constr => v! < v
       Expr fullcheck = mknary<FORALL>(faArgs.begin(), faArgs.end());
+
+      // The SMT solver we use for optimizing checks.
       constsmtopt.reset();
       constsmtopt.assertExpr(tocheck);
       constsmtopt.assertExpr(fullcheck);
       return findNextConst(extraconstr);
-      /*outs() << endl;
-      constsmt.toSmtLib(outs());
-      outs() << endl;*/
-      /*if (!bool(constsmt.solve()))
-        return ret;
-      auto m = constsmt.getModelPtr();
-      if (!m)
-        return ret;
-
-      for (int i = 0; i < freshvars.size(); ++i)
-        ret[mk<FAPP>(faArgs[i])] = m->eval(freshvars[i]);
-      free(m);
-      return ret;*/
     }
 
+    // (Maybe) Finds an assignment to the variables listed in `vars`
+    //   which satisfy the constraint listed in `constr`,
+    //   where `constr` must hold on each step of the unrolling
+    //   (i.e. we duplicate `constr` for each row of SSA and conjoin to SSA).
+    //
+    // `inv` is the predicate to consider.
+    // `extraconstr` is an additional set of constraints (not duplicated
+    // over SSA) to add to the problem, over `vars`.
+    //
+    // Returns a model (v \in vars -> Expr) if one found, or an empty
+    // map otherwise.
+    //
+    // Must be called after `unrollAndExecuteMultiple()`.
     template <typename Range>
     ExprUMap findConsts(const Expr& inv, const Expr& constr,
       const ExprVector& extraconstr, const Range& vars)
@@ -970,7 +1005,9 @@ namespace ufo
       ExprVector faArgs;
       for (int i = 0; i < bvars.size(); ++i) {
         for (int j = 0; j < bvars[i].size(); ++j)
+          // Universally-quantify all SSA variables.
           faArgs.push_back(bvars[i][j]->left());
+        // Rewrite and add `constr` for each row of SSA.
         bndconstr[i] = replaceAll(constr, srcVars, bvars[i]);
         bndconstr[i] = replaceAll(bndconstr[i], dstVars, bvars[i+1]);
       }
@@ -978,6 +1015,7 @@ namespace ufo
       Expr lastssa_conj = conjoin(lastssa[inv], m_efac);
       Expr bndconstr_conj = conjoin(bndconstr, m_efac);
       faArgs.push_back(mk<IMPL>(lastssa_conj, bndconstr_conj));
+      // \forall{SSA vars}. SSA => (rewrite of constr)
       Expr tocheck = mknary<FORALL>(faArgs.begin(), faArgs.end());
       constsmt.reset();
       constsmt.assertExpr(tocheck);
@@ -986,6 +1024,14 @@ namespace ufo
       return findNextConst(extraconstr);
     }
 
+    // Uses the `inv`, `constr`, and `vars` of the previous call to
+    //   `findConsts` or `findConsts2` to find a model involving the
+    //   additional set of constraints `newconstr`. If `newconstr` is empty,
+    //   will find the same model.
+    //
+    // Ignores any `extraconstr` and any prior `newconstr` passed.
+    //
+    // Returns model of same format as `findConsts[2]`, empty if none.
     ExprUMap findNextConst(const ExprVector& newconstr, bool donoopt=true)
     {
       ExprUMap ret;
@@ -1000,7 +1046,7 @@ namespace ufo
       tribool solveret = smt.solve();
       if (indeterminate(solveret))
       {
-        outs() << "Warning: unknown in findConsts" << endl;
+        //outs() << "Warning: unknown in findConsts" << endl;
         if (didpush) smt.pop();
         if (donoopt)
           return findNextConst(newconstr, false);

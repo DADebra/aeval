@@ -478,9 +478,8 @@ namespace ufo
           }
         }
 
-        //getAllEqs(inv, smtcands);
+        //getAllEqs(inv, invVars, smtcands);
         getAllIneqs(inv, invVars, cands);
-        //getSimplIneqs(inv, smtcands);
 
         computetime("poly conversion time ", start);
 
@@ -491,6 +490,13 @@ namespace ufo
 
     }
 
+    // Produces templates of the form: c1*v1 + c2*v2 + ... > cc,
+    //   then tries to fill them.
+    // `inv` is the predicate to find a candidate for.
+    // `invVars` is the list of unprimed variables for that predicate.
+    // `cands` is the output.
+    //
+    // Returns the number of candidates found.
     template <class CONTAINERT>
     int getAllIneqs(const Expr& inv, const ExprVector& invVars, CONTAINERT& cands)
     {
@@ -504,21 +510,16 @@ namespace ufo
       optcs.push_back(mkConst(mkTerm(string("__FH_c_c"), m_efac), mk<INT_TY>(m_efac)));
 
       Expr templ = mk<GT>(mknary<PLUS>(templlhs), optcs.back());
-      return fillTempl<LEQ>(inv, templ, cs, optcs, cands);
+      return fillTempl2<LEQ>(inv, templ, cs, optcs, cands);
     }
 
-    template <class CONTAINERT> 
-    int getSimplIneqs(const Expr& inv, const ExprVector& invVars, CONTAINERT& cands)
-    {
-      ExprVector cs, templlhs;
-      cs.push_back(mkConst(mkTerm(string("__FH_c_c"), m_efac), mk<INT_TY>(m_efac)));
-
-      Expr templgt = mk<GT>(mknary<PLUS>(invVars), cs.back());
-      Expr templlt = mk<LT>(mknary<PLUS>(invVars), cs.back());
-      return fillTempl<LEQ>(inv, templgt, cs, cands) +
-        fillTempl<GEQ>(inv, templlt, cs, cands);
-    }
-
+    // Produces templates of the form: c1*v1 + c2*v2 + ... = cc,
+    //   then tries to fill them.
+    // `inv` is the predicate to find a candidate for.
+    // `invVars` is the list of unprimed variables for that predicate.
+    // `cands` is the output.
+    //
+    // Returns the number of candidates found.
     template <class CONTAINERT>
     int getAllEqs(const Expr& inv, const ExprVector& invVars, CONTAINERT& cands)
     {
@@ -536,6 +537,18 @@ namespace ufo
     }
 
     // Assumes `vars.back()` is the constant term.
+    // `inv` is the predicate to find a candidate for.
+    // `templ` is the template to fill.
+    // Note that 'vars' means 'coefficients', not program variables.
+    // `optvars` is the set of coefs to optimize for, a subset of `vars`.
+    // `cands` is the output.
+    //
+    // Returns the number of candidates found.
+    //
+    // This version starts by trying to find any candidate, then adds
+    // the additional constraint (coef != 0) for each coef which was zero.
+    //
+    // It doesn't work very well, producing large candidates which overfit.
     template <typename OptimOp, class CONTAINERT>
     int fillTempl(const Expr& inv, const Expr& templ, const ExprVector& vars,
       const ExprVector& optvars, CONTAINERT& cands)
@@ -545,10 +558,13 @@ namespace ufo
       Expr unptempl = replaceAll(templ,
         ruleManager.invVarsPrime[inv], ruleManager.invVars[inv]);
       Expr zero = mkTerm<mpz_class>(0, m_efac);
-      //Expr notzero=mknary<OR>(ExprVector{mk<NEQ>(c1, zero), mk<NEQ>(c2, zero)});
+
+      // Find any candidate.
       consts = bnd.findConsts2<OptimOp>(inv, templ, ExprVector(), vars, optvars);
       if (consts.empty())
         return 0; // Nothing found, don't return
+
+      // Verbose way of only returning candidates that aren't 0 > 0.
       bool addcand = false;
       for (const auto& var_val : consts)
         if (find(optvars.begin(), optvars.end(), var_val.first) == optvars.end()&&
@@ -557,62 +573,129 @@ namespace ufo
         { addcand = true; break; }
       if (addcand)
         cands.insert(cands.end(), replaceAll(unptempl, consts));
+
       // Not doing all perms because I don't think it'll be worth it.
-      //function<void(ExprVector)> perm = [&] (ExprVector constrs)
       ExprVector newconstrs;
       ExprUSet newnotzero, failednotzero;
       int found = 1;
       while (true)
       {
         Expr pickedconst;
+        // Look through coefs in previous candidate...
         for (const auto& var_val : consts)
+          // Picking one that was zero...
           if (find(optvars.begin(), optvars.end(), var_val.first) == optvars.end() &&
               isOpX<MPZ>(var_val.second) &&
               getTerm<mpz_class>(var_val.second) == 0 &&
               failednotzero.count(var_val.first) == 0 &&
               newnotzero.insert(var_val.first).second)
           {
+            // And constrain that it must not be zero.
             pickedconst = var_val.first;
             newconstrs.emplace_back(mk<NEQ>(var_val.first, zero));
             break;
           }
         if (!pickedconst)
-          break;
+          break; // All coefs are !0 or we already tried, so break.
         consts = bnd.findNextConst(newconstrs);
         if (!consts.empty())
         {
           ++found;
           cands.insert(cands.end(), replaceAll(unptempl, consts));
-          //failednotzero.clear();
         }
         else
         {
+          // We failed to find a candidate, remove new constraint.
           newconstrs.pop_back();
           newnotzero.erase(pickedconst);
           failednotzero.insert(pickedconst);
         }
       }
-      //auto ineq1 = findIneqs(inv, mk<MINUS>(invVars[0], invVars[1]), c);
       return found;
     }
 
-    // Returns <`lhs < rhs`, `lhs > rhs`>, either NULL if doesn't exist.
-    // `rhs` must be a variable (FAPP)
-    /*std::pair<Expr,Expr> findIneqs(const Expr& inv,
-      const Expr& lhs, const Expr& rhs)
+    // Assumes `vars.back()` is the constant term.
+    // `inv` is the predicate to find a candidate for.
+    // `templ` is the template to fill.
+    // Note that 'vars' means 'coefficients', not program variables.
+    // `optvars` is the set of coefs to optimize for, a subset of `vars`.
+    // `cands` is the output.
+    //
+    // Returns the number of candidates found.
+    //
+    // This version starts by looking for all unary (a*v > b) candidates,
+    //   then going to higher arities when needed. The hope is that it would
+    //   produce more useful candidates than `fillTempl`. It produces smaller
+    //   candidates, but because of the way BndExpl::findConsts2 works it
+    //   overfits and doesn't produce invariants.
+    template <typename OptimOp, class CONTAINERT>
+    int fillTempl2(const Expr& inv, const Expr& templ, const ExprVector& vars,
+      const ExprVector& optvars, CONTAINERT& cands)
     {
-      assert(invVars.size() > 0);
-      if (invVars.size() > 1) // TODO: Current limitation
-        return std::pair<Expr,Expr>(NULL, NULL);
+      ExprVector foundconsts;
+      ExprUMap consts;
+      Expr unptempl = replaceAll(templ,
+        ruleManager.invVarsPrime[inv], ruleManager.invVars[inv]);
+      int found = 0;
+      // Add a candidate to cands if one found
+      auto maybeaddcand = [&] ()
+      {
+        if (!consts.empty())
+        {
+          cands.insert(cands.end(),
+            simplifyArithm(replaceAll(unptempl, consts)));
+          ++found;
+        }
+      };
+      Expr zero = mkTerm<mpz_class>(0, m_efac);
+      // Find any solution to templ
+      consts = bnd.findConsts2<OptimOp>(inv, templ, ExprVector(), vars, optvars);
+      maybeaddcand();
 
-      assert(IsConst()(rhs));
-      ExprSet vars{rhs};
+      // Find a candidate that has !0 for one coef and 0 for all other coefs.
+      // Will be of form a*v > 0 after simplification.
 
-      ExprVector etrue = {mk<TRUE>(m_efac)};
-      auto lt = bnd.findConsts(inv, mk<LT>(lhs, rhs), etrue, vars);
-      auto gt = bnd.findConsts(inv, mk<GT>(lhs, rhs), etrue, vars);
-      return make_pair(lt[rhs], gt[rhs]);
-    }*/
+      // The variables for which we haven't found a unary candidate.
+      ExprVector unfoundvars;
+      for (int i = 0; i < vars.size(); ++i)
+      {
+        ExprVector zconstr; zconstr.reserve(vars.size());
+        for (int j = 0; j < vars.size(); ++j)
+          if (j != i)
+            zconstr.push_back(mk<EQ>(vars[j], zero));
+          else
+            zconstr.push_back(mk<NEQ>(vars[j], zero));
+        consts = bnd.findNextConst(zconstr);
+        if (!consts.empty())
+          maybeaddcand();
+        else
+          unfoundvars.push_back(vars[i]);
+      }
+
+      // Find a candidate that has !0 for any coef in 'unfoundvars', with
+      //   no other constraints.
+      ExprVector zconstr(1);
+      for (int i = 0; i < unfoundvars.size(); ++i)
+      {
+        if (!unfoundvars[i])
+          continue;
+        zconstr[0] = mk<NEQ>(vars[i], zero);
+        // TODO: Try to optimize size of solution?
+        consts = bnd.findNextConst(zconstr);
+        maybeaddcand();
+        for (const auto& var_val : consts)
+          if (isOpX<MPZ>(var_val.second) && getTerm<mpz_class>(var_val.second) != 0)
+          {
+            auto itr = find(unfoundvars.begin(), unfoundvars.end(), var_val.first);
+            if (itr != unfoundvars.end())
+              // We found a candidate which uses a coef other than the one
+              //   we were looking for, mark it as found.
+              *itr = NULL;
+          }
+      }
+
+      return found;
+    }
 
   public:
 
