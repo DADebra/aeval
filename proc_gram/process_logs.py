@@ -16,7 +16,7 @@ res = 1
 print("Benchmark,TimeSecs,Failed")
 for line in ifile:
     line = line.rstrip('\n')
-    if line.find("smt2") >= 0:
+    if line.find("smt2") == len(line) - 4:
         if name:
             print(f"{name},{time},{res}")
         name = line.replace("array_altern_", "").replace(".smt2", "")
