@@ -2,7 +2,7 @@ stdsettings="--v3 --altern-ver 9 --data --grammar forallgram.smt2 --nosimpl --to
 
 [ -z "$freqhorn" ] && freqhorn="../build/tools/deep/freqhorn"
 
-to=60
+to=300
 
 cd "$(realpath "$(dirname "$0")")"
 

@@ -2,7 +2,7 @@ stdsettings="--v3 --data --altern-ver 9 --inv-templ 0 --nosimpl --grammar forall
 
 [ -z "$freqhorn" ] && freqhorn="../build/tools/deep/freqhorn"
 
-to=100
+to=300
 
 cd "$(realpath "$(dirname "$0")")"
 
@@ -27,7 +27,7 @@ echo "Freqhorn: $freqhorn"
 dobench() {
     benchpath="$1"
     benchname="${benchpath#../bench_horn_rapid/}"
-    benchname="${benchname%.smt2}"
+    #benchname="${benchname%.smt2}"
     echo "$benchname"
     savelemmas=""
     if [ "${benchname%_*}" = "array_altern_count_occs" ]
