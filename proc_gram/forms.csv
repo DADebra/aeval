@@ -11,7 +11,7 @@ count_occs_2,$\forall.\exists.b$
 count_occs_3,$\forall.b$
 count_occs_4,$\forall.\forall.b$
 count_occs_5,$\forall.\forall.b$
-exists_0,$\forall.b$
+exists_0,$b$
 filter_0,$\forall.\exists.b$
 filter_1,$\forall.(e \Rightarrow \exists.b)$
 filter_quant_0,$\forall.\exists.b$

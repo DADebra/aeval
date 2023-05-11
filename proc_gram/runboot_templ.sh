@@ -2,7 +2,7 @@ stdsettings="--v3 --data --altern-ver 9 --inv-templ 0 --nosimpl --to 1500"
 
 [ -z "$freqhorn" ] && freqhorn="../build/tools/deep/freqhorn"
 
-to=300
+to=600
 
 cd "$(realpath "$(dirname "$0")")"
 
@@ -26,7 +26,7 @@ echo "Freqhorn: $freqhorn"
 # 1: Benchmark name (without prefix 'array_altern'
 dobench() {
     benchpath="$1"
-    benchname="${benchpath#../bench_horn_rapid/array_altern}"
+    benchname="${benchpath#../bench_horn_rapid/array_altern_}"
     #benchname="${benchname%.smt2}"
     echo "$benchname"
     savelemmas=""
@@ -34,7 +34,7 @@ dobench() {
     then
       savelemmas="--save-lemmas"
     fi
-    cpp -P -I templgrams templgrams/$benchname.smt2 > tmptemplgram.smt2
+    cpp -P -I templgrams templgrams/$benchname > tmptemplgram.smt2
     time -p timeout "$to" "$freqhorn" --grammar tmptemplgram.smt2 $stdsettings $savelemmas "$benchpath"
 }
 

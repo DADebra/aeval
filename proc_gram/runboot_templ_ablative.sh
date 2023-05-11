@@ -21,7 +21,7 @@ dobench() {
     alternver="$1"
     benchname="$2"
     benchpath="../bench_horn_rapid/array_altern_$benchname.smt2"
-    echo "$benchname"
+    echo "array_altern_$benchname.smt2"
     savelemmas=""
     if [ "${benchname%_*}" = "count_occs" ]
     then

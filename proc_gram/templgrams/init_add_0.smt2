@@ -1,8 +1,11 @@
 
 #include "shared.smt2"
 
-(assert (= PROP
+(assert (= PROP (either
   (forall ((favar Int))
     (exists ((exvar Int)) DEF_CANDS)
   )
-))
+  (forall ((favar Int))
+    (exists ((exvar Int)) (=> DEF_CANDS DEF_CANDS))
+  )
+)))

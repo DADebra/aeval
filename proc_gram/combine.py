@@ -9,7 +9,7 @@ if len(sys.argv) < 6:
     exit(1)
 
 rapidsucceeded = set()
-for line in open("rapidsucceeded.txt", "r"):
+for line in open(f"{dirname(sys.argv[0])}/rapidsucceeded.txt", "r"):
     line = line.rstrip('\n')
     rapidsucceeded.add(line)
 
@@ -36,6 +36,14 @@ class Result:
         self.ourfailed = None
         self.form = None
         self.minvers = None
+
+    def __str__(self):
+        return "{{ freq:{},{} rapid:{},{} our:{},{} }}".format(
+            self.freqtime, self.freqfailed, self.rapidtime, self.rapidfailed,
+            self.ourtime, self.ourfailed)
+
+    def __repr__(self):
+        return str(self)
 
 for line in freqcsv:
     if line[0] not in combined:

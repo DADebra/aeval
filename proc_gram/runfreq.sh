@@ -2,7 +2,7 @@ stdsettings="--v3 --altern-ver -1 --to 1500 --no-save-lemmas --inv-templ 0"
 
 freqhorn="./freqhorn-stock"
 
-to=30
+to=600
 
 cd "$(realpath "$(dirname "$0")")"
 
