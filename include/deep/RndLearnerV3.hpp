@@ -1492,20 +1492,103 @@ namespace ufo
       {
         // run at the beginning, compute data once
         map<Expr, ExprVector> m;
-        getArrRanges(m);
+        //getArrRanges(m);
         map<Expr, ExprSet> constr;
+        Expr etrue = mk<TRUE>(m_efac);
+        // T: Look at a[i] and a'[i].    F: Look at a'[i] only.
+        bool dounp = hasconstarr || invNumber > 1;
         for (int i = 0; i < dat; i++)
         {
           if (!dl.computeData(m, constr)) break;
           poly.push_back(map<Expr, ExprSet>());
-          for (auto & dcl : decls)
+          for (int dclnum = 0; dclnum < decls.size(); ++dclnum)
           {
-            ExprSet tmp;
-            dl.computePolynomials(dcl, tmp);
-            simplify(tmp);
-            poly.back()[dcl] = tmp;
-            filterTrivCands(tmp);
-            constr[dcl].insert(conjoin(tmp, m_efac));
+            auto& dcl = decls[dclnum];
+            Expr lms = sfs[dclnum].back().getAllLemmas();
+
+            Expr loopbody = mk<TRUE>(m_efac);
+            for (const auto& chc : ruleManager.chcs)
+              if (chc.isInductive && chc.srcRelation == dcl)
+                loopbody = chc.body; // Won't really work if >1 inductive CHC.
+
+            ExprMap sels;
+            //ExprMap unp_sels; // Selectors with primed vars removed.
+            ExprUSet excl_sels; // Set of arrays not to disable selectors for.
+            auto arrranges = getRangesAll(dcl);
+            for (auto& kv : arrranges)
+            {
+              for (Expr& rng : kv.second)
+              {
+                // Order important: Doing latter replaceAll here would also
+                //   replace kv.first.
+                rng = replaceAll(rng,
+                  ruleManager.invVars[dcl], ruleManager.invVarsPrime[dcl]);
+                // Figure out what the expression in the select is and
+                //   use it instead of rngvar.
+                int i;
+                for (i = 0; i < dl.invVarsUnp[dcl].size() && ruleManager.invVars[dcl][i] != kv.first; ++i);
+                rng = replaceAll(rng,
+                  rngvars[kv.first], dl.invVarsUnp[dcl][i]->right());
+              }
+              Expr arrsel = conjoin(kv.second, m_efac);
+              sels[kv.first] = arrsel;
+              // Not sure if this works well enough, disabled for now.
+              /*Expr unp_arrsel = ufo::eliminateQuantifiers(
+                mk<AND>(loopbody, arrsel), ruleManager.invVarsPrime[dcl]);
+              if (!isOpX<FALSE>(unp_arrsel))
+                unp_sels[kv.first] = unp_arrsel;*/
+              // TODO: Re-enable.
+              /*if (!u.isSat(loopbody, lms, mkNeg(arrsel)))
+                excl_sels.insert(kv.first);*/
+            }
+            ExprVector selsv(sels.size());
+            //ExprVector unp_selsv(sels.size());
+            auto permbody = [&] ()
+            {
+              int i = 0;
+              for (const auto& kv : sels)
+              {
+                selsv[i] = kv.second;
+                /*if (unp_sels.count(kv.first) != 0)
+                  unp_selsv[i] = unp_sels[kv.first];
+                else
+                  unp_selsv[i] = etrue; // TODO: Do something else here.
+                */
+                ++i;
+              }
+              Expr conjsels = simplifyBool(simplifyArithm(conjoin(selsv, m_efac)));
+              if (!u.isSat(loopbody, lms, conjsels)) return;
+
+              ExprSet tmp;
+              dl.computePolynomials(dcl, tmp, conjsels, dounp);
+              simplify(tmp);
+              poly.back()[dcl].insert(tmp.begin(), tmp.end());
+              /*for (const Expr& t : tmp)
+                poly.back()[dcl].insert(
+                  isOpX<TRUE>(conjsels) ? t : mk<IMPL>(conjsels, t));*/
+              filterTrivCands(tmp);
+              constr[dcl].insert(conjoin(tmp, m_efac));
+            };
+            std::function<void(ExprMap::iterator)> perm =
+              [&] (ExprMap::iterator key)
+            {
+              if (key == sels.end())
+              {
+                permbody();
+                return;
+              }
+              /*else if (excl_sels.count(key->first) != 0)
+                return perm(++key);*/
+
+              auto nextkey = key;
+              nextkey++;
+              Expr selsbody = key->second;
+              perm(nextkey);
+              key->second = etrue;
+              perm(nextkey);
+              key->second = selsbody;
+            };
+            perm(sels.begin());
           }
         }
       }
@@ -1522,7 +1605,7 @@ namespace ufo
               poly.push_back(map<Expr, ExprSet>());
               dl.computeDataSplit(srcRel, phaseGuard, invs, fwd, constr);
               ExprSet tmp;
-              dl.computePolynomials(dcl, tmp);
+              dl.computePolynomials(dcl, tmp, NULL);
               simplify(tmp);
               poly.back()[dcl] = tmp;
               filterTrivCands(tmp);
@@ -1693,7 +1776,7 @@ namespace ufo
 
     // K: Array, V: Full new range(s)
     typedef unordered_map<Expr,ExprVector> GetRangesRet;
-    ExprUMap rngvars; // K: Type, V: Variable
+    ExprUMap rngvars; // K: Array Variable, V: Range Variable
     unordered_map<Expr,GetRangesRet> _grvCache;
     unordered_set<Expr> _grvFailed;
     // Returns { array var -> (progress range, regress range, full range) }
@@ -1701,6 +1784,8 @@ namespace ufo
     //
     // Regress and full ranges only returned if program contains a
     //   const array or multiple loops.
+    //
+    // Ranges returned are in terms of rngvars[array variable].
     GetRangesRet getRangesAll(Expr inv)
     {
       bool saveret = true;
@@ -2350,12 +2435,14 @@ namespace ufo
             return make_pair(ExprVector(), Expr(NULL));
         if (argret.second)
         {
-          if (foundsel && ranges.count(foundsel) && ranges.count(argret.second) && ranges.at(foundsel) != ranges.at(argret.second))
+          if (ranges.count(argret.second) && !ranges.count(foundsel))
+            foundsel = argret.second;
+          if (foundsel && isOpX<BOOL_TY>(typeOf(e->arg(i))) &&
+              ranges.count(foundsel) && ranges.count(argret.second) &&
+              ranges.at(foundsel) != ranges.at(argret.second))
           {
             apply = true;
           }
-          if (ranges.count(argret.second) && !ranges.count(foundsel))
-            foundsel = argret.second;
         }
         foundsels.push_back(argret.second);
         newargs.push_back(argret.first);
@@ -2858,7 +2945,8 @@ namespace ufo
       {
         if (pos == qvs.size())
         {
-          ExprUMap newquants;
+          //ExprUMap newquants;
+          Expr qcand = cand;
           for (int i = quantAssigns.size() - 1; i >= 0; --i)
           {
             // I had bugs where quantifiers were invalidally getting skipped,
@@ -2872,13 +2960,12 @@ namespace ufo
                 quantAssigns[i].begin(), quantAssigns[i].end());
               tmpcand = replaceAll(tmpcand, stockAssigns[i], quantAssigns[i]);
               newquants[quants[i]] = tmpcand;*/
-            newquants[quants[i]] = replaceAll(quants[i],
-              stockAssigns[i], quantAssigns[i]);
+            qcand = replaceAll(qcand, stockAssigns[i], quantAssigns[i]);
             /*}
             else
               newquants[quants[i]] = quantAssigns[i].back();*/
           }
-          Expr qcand = replaceAll(cand, newquants);
+          //Expr qcand = replaceAll(cand, newquants);
           ExprVector rangedqcand = alternAddRanges(qcand, decls[invNum]);
           for (const Expr& e : rangedqcand)
             if (seen.insert(e).second)
@@ -3835,8 +3922,6 @@ namespace ufo
 
     ds.postInitGram();
 
-    if (dat > 0) ds.getDataCandidates(cands);
-
     for (auto & dcl: ruleManager.wtoDecls)
     {
       for (int i = 0; i < doProp; i++)
@@ -3844,6 +3929,11 @@ namespace ufo
       ds.addCandidates(dcl, cands[dcl]);
       ds.prepareSeeds(dcl, cands[dcl]);
     }
+
+    if (dBoot)
+      if (ds.bootstrap1()) return true;
+
+    if (dat > 0) ds.getDataCandidates(cands);
 
     if (dBoot)
       if (ds.bootstrap2()) return true;

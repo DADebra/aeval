@@ -100,12 +100,25 @@ namespace ufo
       for (auto & m : mdl) e[m->left()] = m->right();
     }
 
-    template <typename T> void getOptModel (ExprSet& vars, ExprMap& e, Expr v)
+    template <typename T> void getOptModel (ExprSet& vars, ExprMap& e, Expr v,
+      bool good_enough = false)
     {
+      bool can_do_diff = good_enough && isOpX<INT_TY>(typeOf(v));
+      mpz_class last_val = 0;
+      bool first = true;
       if (!can_get_model) return;
       while (true)
       {
         getModel(vars, e);
+        if (can_do_diff && isOpX<MPZ>(e[v]))
+        {
+          mpz_class val = getTerm<mpz_class>(e[v]);
+          // Stop iteration if our new value is < 1% different from previous.
+          if (!first && abs((val - last_val) / last_val) < 0.01)
+            return;
+          first = false;
+          last_val = val;
+        }
         smt.assertExpr(mk<T>(v, e[v]));
         if (m != NULL) { free(m); m = NULL; }
         auto res = smt.solve();

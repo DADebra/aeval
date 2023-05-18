@@ -50,3 +50,4 @@ logs/
 libs/
 proc_gram/*.zip
 proc_gram/eval*/
+proc_gram/tmptemplgram.smt2

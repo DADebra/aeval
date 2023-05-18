@@ -3059,6 +3059,15 @@ namespace expr
   }
 
   // pairwise replacing
+  inline Expr replaceOne (Expr exp, const ExprVector& s, const ExprVector& t)
+  {
+    assert(s.size() == t.size());
+    if (s.empty()) return exp;
+    RAVALL rav(&s, &t);
+    return dagVisit (rav, exp);
+  }
+
+  // pairwise replacing
   inline Expr replaceAll (Expr exp, const ExprMap& m)
   {
     if (m.empty()) return exp;
@@ -3069,6 +3078,14 @@ namespace expr
   }
 
   // pairwise replacing
+  inline Expr replaceOne (Expr exp, const ExprMap& m)
+  {
+    if (m.empty()) return exp;
+    RAVALLM<ExprMap> rav(&m);
+    return dagVisit (rav, exp);
+  }
+
+  // pairwise replacing
   inline Expr replaceAll (Expr exp, const ExprUMap& m)
   {
     if (m.empty()) return exp;
@@ -3076,6 +3093,14 @@ namespace expr
     Expr tmp = dagVisit (rav, exp);
     if (tmp == exp) return tmp;
     else return replaceAll(tmp, m);
+  }
+
+  // pairwise replacing
+  inline Expr replaceOne (Expr exp, const ExprUMap& m)
+  {
+    if (m.empty()) return exp;
+    RAVALLM<ExprUMap> rav(&m);
+    return dagVisit (rav, exp);
   }
 
   // pairwise replacing

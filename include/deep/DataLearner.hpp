@@ -479,7 +479,7 @@ namespace ufo
         }
 
         //getAllEqs(inv, invVars, smtcands);
-        getAllIneqs(inv, invVars, cands);
+        //getAllIneqs(inv, invVars, cands);
 
         computetime("poly conversion time ", start);
 
@@ -713,11 +713,9 @@ namespace ufo
 
     bool computeData(map<Expr, ExprVector>& arrRanges, map<Expr, ExprSet>& constr)
     {
-      exprToModelsUnp.clear();
-      exprToModelsP.clear();
       invVarsUnp.clear();
       invVarsP.clear();
-      return bnd.unrollAndExecuteMultiple(invVarsUnp, invVarsP, exprToModelsUnp, exprToModelsP, arrRanges, constr);
+      return bnd.unrollAndExecuteMultiple(invVarsUnp, invVarsP, arrRanges, constr);
     }
 
     void computeDataSplit(Expr srcRel, Expr splitter, Expr invs, bool fwd, ExprSet& constr)
@@ -733,30 +731,37 @@ namespace ufo
 
     // Implementation of "A Data Driven Approach for Algebraic Loop Invariants", Sharma et al.
     // return number of candidate polynomials added (< 0 in case of error)
+    //
+    // `sels` is {variable -> range for that variable}.
+    //    Note that ranges for arrays are expected to use the array as the
+    //    thing to range (e.g. 0 <= a < a_len) even though it won't typecheck.
     template <class CONTAINERT> void
-    computePolynomials(Expr inv, CONTAINERT & cands)
+    computePolynomials(Expr inv, CONTAINERT & cands, Expr sels, bool dounp = false)
     {
       CONTAINERT tmp;
-      const int maxIsP = (invVarsUnp == invVarsP) ? 2 : 1;
-      for (int isP = 0; isP < maxIsP; ++isP)
+      const int maxIsUnp = (invVarsUnp != invVarsP && dounp) ? 2 : 1;
+      for (int isUnp = 0; isUnp < maxIsUnp; ++isUnp)
       {
-        auto& exprToModels = isP ? exprToModelsP : exprToModelsUnp;
-        auto& invVars = isP ? invVarsP : invVarsUnp;
-        while (!exprToModels[inv].empty())
+        auto& exprToModels = isUnp ? exprToModelsUnp[inv] : exprToModelsP[inv];
+        auto& invVars = isUnp ? invVarsUnp[inv] : invVarsP[inv];
+
+        exprToModels.clear();
+        bnd.getMat(inv, invVars, exprToModels, sels);
+        while (!exprToModels.empty())
         {
           arma::mat dataMatrix;
-          for (auto model : exprToModels[inv]) {
+          for (auto model : exprToModels) {
             arma::rowvec row = arma::conv_to<arma::rowvec>::from(model);
             row.insert_cols(0, arma::rowvec(1, arma::fill::ones));
             dataMatrix.insert_rows(dataMatrix.n_rows, row);
           }
 
           map<unsigned int, Expr> monomialToExpr;
-          if (0 == initInvVars(inv, invVars[inv], monomialToExpr)) return;
+          if (0 == initInvVars(inv, invVars, monomialToExpr)) return;
           initLargeCoeffToExpr(dataMatrix);
-          getPolynomialsFromData(dataMatrix, tmp, inv, invVars[inv], monomialToExpr);
+          getPolynomialsFromData(dataMatrix, tmp, inv, invVars, monomialToExpr);
           if (tmp.size() > 0) break;
-          else exprToModels[inv].pop_back();
+          else exprToModels.pop_back();
         }
         cands.insert(tmp.begin(), tmp.end());
       }

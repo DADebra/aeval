@@ -4,6 +4,6 @@
 (assert (= PROP
   (=>
     (< 0 _FH_inv_3)
-    (exists ((exvar Int)) PROP)
+    (exists ((exvar Int)) DEF_CANDS)
   )
 ))

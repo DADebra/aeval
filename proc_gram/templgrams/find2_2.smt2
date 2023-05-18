@@ -2,7 +2,8 @@
 #include "shared.smt2"
 
 (assert (= PROP
-  (forall ((favar Int))
+  (=>
+    (and (<= 0 _FH_inv_3) (< _FH_inv_1 _FH_inv_3))
     (exists ((exvar Int)) DEF_CANDS)
   )
 ))
