@@ -100,30 +100,34 @@ namespace ufo
       for (auto & m : mdl) e[m->left()] = m->right();
     }
 
-    template <typename T> void getOptModel (ExprSet& vars, ExprMap& e, Expr v,
-      bool good_enough = false)
+    template <typename T> bool getOptModel (ExprSet& vars, ExprMap& e, Expr v,
+      bool good_enough = false, unsigned maxIters = -1)
     {
       bool can_do_diff = good_enough && isOpX<INT_TY>(typeOf(v));
       mpz_class last_val = 0;
       bool first = true;
-      if (!can_get_model) return;
-      while (true)
+      if (!can_get_model) return false;
+      for (unsigned iter = 0; iter < maxIters; ++iter)
       {
+        Expr vale = iter == 0 && e.count(v) != 0 ? e.at(v) : getModel(v);
         getModel(vars, e);
-        if (can_do_diff && isOpX<MPZ>(e[v]))
+        e[v] = vale;
+        if (can_do_diff && isOpX<MPZ>(vale))
         {
-          mpz_class val = getTerm<mpz_class>(e[v]);
+          mpz_class val = getTerm<mpz_class>(vale);
           // Stop iteration if our new value is < 1% different from previous.
           if (!first && abs((val - last_val) / last_val) < 0.01)
-            return;
+            break;
           first = false;
           last_val = val;
         }
-        smt.assertExpr(mk<T>(v, e[v]));
+        smt.assertExpr(mk<T>(v, vale));
         if (m != NULL) { free(m); m = NULL; }
         auto res = smt.solve();
-        if (!res || indeterminate(res)) return;
+        if (!res) return true;
+        if (indeterminate(res)) break;
       }
+      return false;
     }
 
     void reset()

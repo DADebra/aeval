@@ -159,7 +159,7 @@ int main (int argc, char ** argv)
         "V3 options only:\n" <<
         " " << OPT_DATA_LEARNING << " <N>                      bootstrap candidates from behaviors (0: no, NUM: rounds)\n" <<
         "                                 (if \"" << OPT_DISJ <<"\" is enabled, then default is 1; otherwise, 0)\n\n" <<
-        " " << OPT_MUT << "                           level of mutation for bootstrapped candidates (0: no, 1: (default), 2: full)\n" <<
+        " " << OPT_MUT << "                           level of mutation for bootstrapped candidates (0: no, 1: (default) syntax-only, 2: syntax+data, 3: full)\n" <<
         " " << OPT_SEED << "                   do not analyze syntax for seeds mining, except of the query\n" <<
         "                                 (thus, will disable quantified invariants)\n" <<
         " " << OPT_MBP << "                       break equalities while MBP generation (0: no (default), 1: yes, 2: both)\n" <<

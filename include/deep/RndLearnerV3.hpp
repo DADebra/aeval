@@ -1537,13 +1537,12 @@ namespace ufo
                 mk<AND>(loopbody, arrsel), ruleManager.invVarsPrime[dcl]);
               if (!isOpX<FALSE>(unp_arrsel))
                 unp_sels[kv.first] = unp_arrsel;*/
-              // TODO: Re-enable.
-              /*if (!u.isSat(loopbody, lms, mkNeg(arrsel)))
-                excl_sels.insert(kv.first);*/
+              if (!u.isSat(loopbody, lms, mkNeg(arrsel)))
+                excl_sels.insert(kv.first);
             }
             ExprVector selsv(sels.size());
             //ExprVector unp_selsv(sels.size());
-            auto permbody = [&] ()
+            auto permbody = [&] (Expr forcesel = NULL)
             {
               int i = 0;
               for (const auto& kv : sels)
@@ -1557,6 +1556,7 @@ namespace ufo
                 ++i;
               }
               Expr conjsels = simplifyBool(simplifyArithm(conjoin(selsv, m_efac)));
+              conjsels = forcesel ? forcesel : conjsels;
               if (!u.isSat(loopbody, lms, conjsels)) return;
 
               ExprSet tmp;
@@ -1577,8 +1577,8 @@ namespace ufo
                 permbody();
                 return;
               }
-              /*else if (excl_sels.count(key->first) != 0)
-                return perm(++key);*/
+              else if (excl_sels.count(key->first) != 0)
+                return perm(++key);
 
               auto nextkey = key;
               nextkey++;
@@ -1589,6 +1589,7 @@ namespace ufo
               key->second = selsbody;
             };
             perm(sels.begin());
+            permbody(mk<TRUE>(m_efac));
           }
         }
       }
@@ -1616,7 +1617,7 @@ namespace ufo
         }
       }
 
-      if (mut == 0)
+      if (mut < 2)
       {
         for (auto & c : poly)
           for (auto & p : c)
@@ -1624,7 +1625,7 @@ namespace ufo
             {
               int invNum = getVarIndex(p.first, decls);
               if (containsOp<ARRAY_TY>(a))
-                arrCands[invNum].insert(a);
+                getQVcands(invNum, a, cands[p.first]);
               else
                 addDataCand(invNum, a, cands[p.first]);
             }
@@ -1637,7 +1638,7 @@ namespace ufo
         {
           int invNum = getVarIndex(p.first, decls);
           ExprSet tmp, its;
-          if (mut == 1 && ruleManager.hasArrays[p.first])   // heuristic to remove cands irrelevant to counters and arrays
+          if (mut == 3 && ruleManager.hasArrays[p.first])   // heuristic to remove cands irrelevant to counters and arrays
           {
             for (auto q : qvits[invNum]) its.insert(q->iter);
             for (auto it = p.second.begin(); it != p.second.end();)
@@ -1648,7 +1649,11 @@ namespace ufo
           }
           mutateHeuristicEq(p.second, tmp, p.first, (phaseGuard == NULL));
           for (auto & c : tmp)
-            addDataCand(invNum, c, cands[p.first]);
+            //addDataCand(invNum, c, cands[p.first]);
+            if (containsOp<ARRAY_TY>(c))
+              getQVcands(invNum, c, cands[p.first]);
+            else
+              addDataCand(invNum, c, cands[p.first]);
         }
 #else
       if (printLog) outs() << "Skipping learning from data as required library (armadillo) not found\n";
@@ -1691,10 +1696,7 @@ namespace ufo
         {
           if (printLog >= 2) { outs () << "  " << a << "\n"; printedAny = true; }
 
-          if (containsOp<ARRAY_TY>(a))
-            arrCands[invNum].insert(a);
-          else
-            dst.insert(a);
+          dst.insert(a);
 
           if (isNumericConst(a->right()))
           {
@@ -1708,10 +1710,7 @@ namespace ufo
                 {
                   Expr e = simplifyArithm(normalize(mk<EQ>(a->left(), mk<MULT>(mkMPZ(i1/i2, m_efac), c))));
                   if (!u.isSat(mk<NEG>(e))) continue;
-                  if (containsOp<ARRAY_TY>(e))
-                    arrCands[invNum].insert(e);
-                  else
-                    dst.insert(e);
+                  dst.insert(e);
 
                   if (printLog >= 2) { outs () << "  " << e << "\n"; printedAny = true; }
                 }
@@ -3933,7 +3932,13 @@ namespace ufo
     if (dBoot)
       if (ds.bootstrap1()) return true;
 
-    if (dat > 0) ds.getDataCandidates(cands);
+    if (dat > 0)
+    {
+      map<Expr, ExprSet> dcands;
+      ds.getDataCandidates(dcands);
+      for (auto & dcl: ruleManager.wtoDecls)
+        ds.addCandidates(dcl, dcands[dcl]);
+    }
 
     if (dBoot)
       if (ds.bootstrap2()) return true;

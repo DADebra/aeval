@@ -379,6 +379,8 @@ namespace ufo
               wasselect = true;
               allVars.insert(bindVars[l1-1][-var-1]);
               ai++;
+              // For final row
+              allVars.insert(replaceAll(bvar, bindVars[l1-1], bindVars[l1]));
             }
             bvar = replaceAll(bvar, bindVars[l1-1][-var-1], bindVars[l1][-var-1]);
             allVars.insert(bindVars[l1][-var-1]);
@@ -657,7 +659,6 @@ namespace ufo
         if (allBindVars.count(srcRel) != 0)
           continue;
 
-        //Expr relSel = mk<TRUE>(m_efac);
         ExprVector vars, uniqvars, varsUnp, varsP;
         for (int i = 0; i < srcVars.size(); i++)
         {
@@ -669,8 +670,6 @@ namespace ufo
             varsUnp.push_back(srcVars[i]);
             varsP.push_back(srcVars[i]);
             uniqvars.push_back(srcVars[i]);
-            /*if (sels[srcRel].count(srcVars[i]) != 0)
-              relSel = mk<AND>(relSel, sels[srcRel][srcVars[i]]);*/
           }
           else if (isOpX<ARRAY_TY>(t) && ruleManager.hasArrays[srcRel])
           {
@@ -683,9 +682,6 @@ namespace ufo
               varsP.push_back(vars.back());
               uniqvars.push_back(v);
               mainInds.push_back(-i - 1);  // to be on the negative side
-              /*if (sels[srcRel].count(srcVars[i]) != 0)
-                relSel = mk<AND>(relSel, replaceAll(sels[srcRel][srcVars[i]],
-                  srcVars[i], v->right()));*/
             }
           }
         }
@@ -732,10 +728,6 @@ namespace ufo
 
         lastssa[srcRel].clear();
         getSSA(trace, lastssa[srcRel]);
-        bindVarsEnd = bindVars.back();
-        bindVars.pop_back();
-        int traceSz = trace.size();
-        assert(bindVars.size() == traceSz - 1);
 
         // compute vars for opt constraint
         vector<ExprVector> versVars, versVarsUnp, versVarsP;
@@ -744,9 +736,17 @@ namespace ufo
         fillVars(srcRel, srcVars, uniqvars, l, loop.size(), mainInds, versVars, allVars[srcRel], versVarsUnp, versVarsP);
         getOptimConstr(versVars, vars.size(), srcVars, constr[srcRel], NULL, diseqs);
 
+        // We need final row (which is special because of how we handle arrays)
+        //   in bindVars until here so it shows up in `allVars` from above.
+        bindVarsEnd = bindVars.back();
+        bindVars.pop_back();
+        int traceSz = trace.size();
+        assert(bindVars.size() == traceSz - 1);
+
         Expr cntvar = bind::intConst(mkTerm<string> ("_FH_cnt", m_efac));
         allVars[srcRel].insert(cntvar);
         allVars[srcRel].insert(bindVars.back().begin(), bindVars.back().end());
+        allVars[srcRel].insert(bindVarsEnd.begin(), bindVarsEnd.end());
         lastssa[srcRel].insert(lastssa[srcRel].begin(), mk<EQ>(cntvar, mkplus(diseqs, m_efac)));
 
         // for arrays, make sure the ranges are large enough
@@ -823,7 +823,7 @@ namespace ufo
       return res;
     }
 
-    void getModel(Expr srcRel)
+    void getModel(const Expr& srcRel)
     {
       Expr cntvar = bind::intConst(mkTerm<string> ("_FH_cnt", m_efac));
       ExprMap &allModelsRel = allModels[srcRel];
@@ -833,7 +833,35 @@ namespace ufo
         u.getOptModel<GT>(allVars[srcRel], allModelsRel, cntvar, true);
     }
 
+    template <typename OptOp>
+    bool getOptModel(const Expr& srcRel, const Expr& constr, 
+      const Expr& optvar, const Expr& optstart, unsigned maxIters = -1)
+    {
+      auto& allBV = allBindVars[srcRel];
+      ExprVector& srcVars = ruleManager.invVars[srcRel];
+      ExprVector& dstVars = ruleManager.invVarsPrime[srcRel];
+      Expr ssa = conjoin(lastssa[srcRel], m_efac);
+
+      ExprVector fullconstr;
+      for (int j = 0; j < allBV.size() - 1; j++)
+        fullconstr.push_back(replaceAll(replaceAll(constr,
+            srcVars, allBV[j]),
+          dstVars, allBV[j + 1]));
+
+      if (optstart) allModels[srcRel][optvar] = optstart;
+
+      if (u.isSat(lastModel[srcRel], ssa, conjoin(fullconstr, m_efac)))
+        return u.getOptModel<OptOp>(allVars[srcRel], allModels[srcRel],
+          optvar, false, maxIters);
+      else
+        return false;
+    }
+
     Expr lastsels = NULL;
+    // Return matrix for previous unrolling (via `unrollAndExecuteMultiple`)
+    //   in `outmodel`, using `sels` to filter invalid rows.
+    // May automatically regenerate model via `getModel`, but
+    //   guaranteed not to if `sels` is same as previous call.
     void getMat(Expr srcRel, ExprVector& invVars, DMat & outmodel, Expr sels)
     {
       ExprVector& srcVars = ruleManager.invVars[srcRel];
@@ -845,18 +873,23 @@ namespace ufo
       cpp_int max_double = lexical_cast<cpp_int>(str);
       map<Expr, ExprSet> ms;
       ExprMap& allModelsRel = allModels[srcRel];
+      auto& allBV = allBindVars[srcRel];
+
+      auto replaceBV = [&] (const Expr &e, ExprVector::size_type row)
+      {
+        return replaceAll(replaceAll(e,
+            srcVars, allBV[row]),
+          dstVars, allBV[min(allBV.size() - 1, row + 1)]);
+      };
 
       if (sels != lastsels)
       {
+        // Cached model is invalid, generate a new one.
         lastsels = sels;
         Expr ssa = conjoin(lastssa[srcRel], m_efac);
         ExprVector fullsels;
-        for (int j = 0; j < bindVars.size() - 1; j++)
-        {
-          Expr bsels = replaceAll(sels, srcVars, bindVars[j]);
-          bsels = replaceAll(bsels, dstVars, bindVars[j+1]);
-          fullsels.push_back(bsels);
-        }
+        for (int j = 0; j < allBV.size() - 1; j++)
+          fullsels.push_back(replaceBV(sels, j));
         if (u.isSat(lastModel[srcRel], ssa, conjoin(fullsels, m_efac)))
           getModel(srcRel);
         else if (u.isSat(lastModel[srcRel], ssa, disjoin(fullsels, m_efac)))
@@ -866,7 +899,7 @@ namespace ufo
       }
 
       if (debug) outs () << "\nUnroll and execute the cycle for " <<  srcRel << "\n";
-      for (int j = 0; j < bindVars.size() - 1; j++)
+      for (int j = 0; j < allBV.size(); j++)
       {
         vector<double> model;
         bool toSkip = false;
@@ -899,14 +932,13 @@ namespace ufo
 
         for (int i = 0; i < invVars.size(); i++)
         {
-          Expr bvar = replaceAll(invVars[i], srcVars, bindVars[j]);
-          bvar = replaceAll(bvar, dstVars, bindVars[j+1]);
+          Expr bvar = replaceBV(invVars[i], j);
           if (!dobvar(invVars[i], bvar))
             break;
+          // Filter rows that don't make `sels` true.
           if (sels && !isOpX<TRUE>(sels))
           {
-            Expr bsel = replaceAll(sels, srcVars, bindVars[j]);
-            bsel = replaceAll(bsel, dstVars, bindVars[j+1]);
+            Expr bsel = replaceBV(sels, j);
             bsel = replaceAll(bsel, allModelsRel);
             bsel = simplifyBool(simplifyArithm(bsel));
             if (isOpX<FALSE>(bsel))
@@ -928,8 +960,7 @@ namespace ufo
           {
             for (int i = 0; i < invVars.size(); ++i)
             {
-              Expr bvar = replaceAll(invVars[i], srcVars, bindVars[j]);
-              bvar = replaceAll(bvar, dstVars, bindVars[j+1]);
+              Expr bvar = replaceBV(invVars[i], j);
               Expr m = allModelsRel[bvar];
               outs () << *bvar << " = " << *m << ", ";
             }

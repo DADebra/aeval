@@ -697,6 +697,135 @@ namespace ufo
       return found;
     }
 
+    Operator *vcops[8] = { NULL, new LT(), new GT(), new EQ(),
+                           new EQ(), new LEQ(), new GEQ(), new EQ() };
+    template <class CONTAINERT>
+    int getSimplIneqs(const Expr& inv, const ExprVector& invVars,
+        const arma::mat & data, CONTAINERT& cands, const Expr& sels)
+    {
+      const static int MAX_OPT = 10; // Max iters to try to optimize consts
+      if (data.n_rows == 1)
+        return 0; // Can't do analysis with only one iter.
+
+      int oldsize = cands.size();
+      const int ivs = invVars.size();
+      const ExprVector& srcVars = ruleManager.invVars[inv],
+                       &dstVars = ruleManager.invVarsPrime[inv];
+
+      auto addCand = [&] (const Expr& e)
+      {
+        cands.insert(replaceAll(e, dstVars, srcVars));
+      };
+
+      // viableCombos[vca(var1, var2)] is bitfield with:
+      //   4 if (ever) var1 == var2.
+      //   2 if (always) var1 > var2.
+      //   1 if (always) var1 < var2.
+      //   0 if sometimes both so no inequality.
+      vector<char> viableCombos(ivs * ivs, 3);
+      vector<double> vmin(ivs), vmax(ivs);
+      auto vda = [=] (int v1, int v2) { return v1 * ivs + v2; };
+      vector<double> vdmin(ivs * ivs), vdmax(ivs * ivs);
+
+      for (int var1 = 0; var1 < ivs; ++var1)
+      {
+        double dv1 = data(0, var1 + 1);
+        vmin[var1] = dv1; vmax[var1] = vmin[var1];
+        for (int var2 = var1 + 1; var2 < ivs; ++var2)
+        {
+          double diff = dv1 - data(0, var2 + 1);
+          vdmin[vda(var1, var2)] = diff;
+          vdmax[vda(var1, var2)] = diff;
+        }
+      }
+      for (int row = 1; row < data.n_rows; ++row)
+      {
+        for (int var1 = 0; var1 < ivs; ++var1)
+        {
+          double dv1 = data(row, var1 + 1);
+          vmin[var1] = min(vmin[var1], dv1);
+          vmax[var1] = max(vmax[var1], dv1);
+          for (int var2 = var1 + 1; var2 < ivs; ++var2)
+          {
+            double dv2 = data(row, var2 + 1);
+            if (dv1 < dv2)
+              viableCombos[vda(var1, var2)] &= 1;
+            else if (dv1 > dv2)
+              viableCombos[vda(var1, var2)] &= 2;
+            else //if (dv1 == dv2)
+              viableCombos[vda(var1, var2)] |= 4;
+
+            /*double &vdmn = vdmin[vda(var1, var2)];
+            vdmn = min(vdmn, dv1 - dv2);
+            double &vdmx = vdmax[vda(var1, var2)];
+            vdmx = max(vdmx, dv1 - dv2);*/
+          }
+        }
+      }
+
+      Expr c = bind::intConst(mkTerm<string>("_FH_c", m_efac));
+      for (int var1 = 0; var1 < ivs; ++var1)
+      {
+        if (vmin[var1] == vmax[var1])
+        {
+          // We already found equalities.
+          //addCand(mk<EQ>(invVars[var1], mkTerm<mpz_class>(vmin[var1], m_efac)));
+        }
+        else
+        {
+          Expr mincand = mk<LEQ>(invVars[var1], c);
+          if (bnd.getOptModel<LT>(inv, mk<AND>(mincand, sels), c,
+                mkTerm<mpz_class>(vmin[var1], m_efac), MAX_OPT))
+            addCand(mk<GEQ>(mincand->left(), bnd.allModels[inv][c]));
+          else
+          {
+            Expr maxcand = mk<GEQ>(invVars[var1], c);
+            if (bnd.getOptModel<GT>(inv, mk<AND>(maxcand, sels), c,
+                  mkTerm<mpz_class>(vmax[var1], m_efac), MAX_OPT))
+              addCand(mk<LEQ>(maxcand->left(), bnd.allModels[inv][c]));
+          }
+        }
+        for (int var2 = var1 + 1; var2 < ivs; ++var2)
+        {
+          auto vc12 = viableCombos[vda(var1, var2)];
+          if (vc12)
+            addCand(mk(*vcops[vc12], invVars[var1], invVars[var2]));
+        }
+#if 0
+        for (int var2 = var1 + 1; var2 < ivs; ++var2)
+        {
+          Expr diff12 = mk<MINUS>(invVars[var1], invVars[var2]);
+          double vdmn = vdmin[vda(var1, var2)], vdmx = vdmax[vda(var1, var2)];
+          if (vdmn == vdmx)
+          {
+            //addCand(mk<EQ>(diff12, mkTerm<mpz_class>(vdmn, m_efac)));
+          }
+          else
+          {
+            /*
+            Expr mincand = mk<GEQ>(diff12, mkTerm<mpz_class>(vdmn, m_efac));
+            Expr maxcand = mk<LEQ>(diff12, mkTerm<mpz_class>(vdmx, m_efac));
+            addCand(maxcand);
+            addCand(mincand);*/
+            Expr mincand = mk<GEQ>(diff12, c);
+            if (bnd.getOptModel<LT>(inv, mk<AND>(mincand, sels), c,
+                  mkTerm<mpz_class>(vdmn, m_efac), MAX_OPT))
+              addCand(mk<GEQ>(mincand->left(), bnd.allModels[inv][c]));
+            else
+            {
+              Expr maxcand = mk<LEQ>(diff12, c);
+              if (bnd.getOptModel<GT>(inv, mk<AND>(maxcand, sels), c,
+                    mkTerm<mpz_class>(vdmx, m_efac), MAX_OPT))
+                addCand(mk<LEQ>(maxcand->left(), bnd.allModels[inv][c]));
+            }
+          }
+        }
+#endif
+      }
+
+      return cands.size() - oldsize;
+    }
+
   public:
 
     DataLearner(CHCs& r, EZ3 &z3, int to, bool debug) :
@@ -746,6 +875,8 @@ namespace ufo
         auto& invVars = isUnp ? invVarsUnp[inv] : invVarsP[inv];
 
         exprToModels.clear();
+        // Extra call to `getMat` to make sure we have the best matrix for
+        //   the current `sels`.
         bnd.getMat(inv, invVars, exprToModels, sels);
         while (!exprToModels.empty())
         {
@@ -760,6 +891,7 @@ namespace ufo
           if (0 == initInvVars(inv, invVars, monomialToExpr)) return;
           initLargeCoeffToExpr(dataMatrix);
           getPolynomialsFromData(dataMatrix, tmp, inv, invVars, monomialToExpr);
+          getSimplIneqs(inv, invVars, dataMatrix, tmp, sels);
           if (tmp.size() > 0) break;
           else exprToModels.pop_back();
         }
