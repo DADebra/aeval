@@ -5,7 +5,4 @@
   (forall ((favar Int))
     (exists ((exvar Int)) DEF_CANDS)
   )
-  (forall ((favar Int))
-    (exists ((exvar Int)) (=> DEF_CANDS DEF_CANDS))
-  )
 )))

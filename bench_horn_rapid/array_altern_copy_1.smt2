@@ -13,7 +13,7 @@
 (rule (=> (and (inv a b i n) (< i n) (= (store b i (select a i)) b1) (= i1 (+ i 1))) (inv a b1 i1 n)))
 
 (rule (=> (and (inv a b i n) (not (< i n))
-  (not (forall ((j1 Int)) (=> (and (>= j1 0) (< j1 i))   ; TBD: support full ranges
-    (exists ((i2 Int)) (= (select b j1) (select a i2))))))) fail))
+  (not (forall ((j1 Int)) (=> (and (>= j1 0) (< j1 n))   ; TBD: support full ranges
+    (exists ((i2 Int)) (= (select a j1) (select b i2))))))) fail))
 
 (query fail)

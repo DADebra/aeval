@@ -1,0 +1,8 @@
+check_equal_set_flag_0
+find1_2
+find1_3
+find2_2
+find2_3
+find_max_1
+find_max_from_second_1
+find_min_1

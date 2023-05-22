@@ -769,7 +769,7 @@ namespace ufo
         if (vmin[var1] == vmax[var1])
         {
           // We already found equalities.
-          //addCand(mk<EQ>(invVars[var1], mkTerm<mpz_class>(vmin[var1], m_efac)));
+          addCand(mk<EQ>(invVars[var1], mkTerm<mpz_class>(vmin[var1], m_efac)));
         }
         else
         {

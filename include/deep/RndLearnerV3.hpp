@@ -295,6 +295,20 @@ namespace ufo
 
     bool addCandidate(int invNum, Expr cnd)
     {
+      /*if (alternver == 3)
+      {
+        bool found = false;
+        for (auto & q : qvits[invNum])
+          if (contains(cnd, q->qv)) { found = true; break; }
+        if (!found)
+        {
+          if (!(isOpX<GEQ>(cnd) || isOpX<LEQ>(cnd) || isOpX<GT>(cnd) || isOpX<LT>(cnd) || isOpX<EQ>(cnd)))
+            return false;
+          if (!(bind::IsConst()(cnd->left()) && isLit(cnd->right())) &&
+              !(bind::IsConst()(cnd->right()) && isLit(cnd->left())))
+            return false;
+        }
+      }*/
       if (printLog >= 3) outs () << "Adding candidate [" << invNum << "]: " << cnd << "\n";
       SamplFactory& sf = sfs[invNum].back();
       Expr allLemmas = sf.getAllLemmas();
@@ -1404,7 +1418,8 @@ namespace ufo
       }
 
       // process all quantifier-free seeds
-      cands = candsFromCode;
+      //cands = candsFromCode;
+      cands.insert(candsFromCode.begin(), candsFromCode.end());
       for (auto & cand : candsFromCode)
       {
         Expr replCand = replaceAllRev(cand, sf.lf.nonlinVars);
@@ -2166,8 +2181,8 @@ namespace ufo
             {
               cout << "Bootstrap: Failed to order bounds: l=" << boundlo
                 << ", h=" << boundhi << endl;
-              _grvFailed.insert(inv);
-              orderingFailed = true;
+              /*_grvFailed.insert(inv);
+              orderingFailed = true;*/
             }
 
             Expr arrtype = typeOf(range_arrs[i])->left();
@@ -2860,7 +2875,7 @@ namespace ufo
     // Version of CheckCand that we use while for checking the output
     //   of `generalizeArrQuery`.
     // Used to be used for more, probably not needed now.
-    bool bootstrapCheckCand(Expr cand, int invNum, bool isnewpost = false)
+    bool bootstrapCheckCand(Expr cand, int invNum, bool isnewpost, string vers)
     {
       if (printLog)
       {
@@ -2874,14 +2889,14 @@ namespace ufo
         assignPrioritiesForLearned();
         if (checkAllLemmas())
         {
-          outs () << "Success after bootstrapping\n";
+          outs () << "Success after bootstrapping " << vers << "\n";
           printSolution();
           return true;
         }
         if (!isnewpost && alternver >= 5)
         {
           for (const Expr& np : newposts)
-            if (bootstrapCheckCand(np, queryInvNum, true))
+            if (bootstrapCheckCand(np, queryInvNum, true, vers))
               return true;
         }
       }
@@ -3157,7 +3172,8 @@ namespace ufo
       {
         //filterUnsat();
         for (const auto& kv : candidates)
-          bootCands[kv.first].insert(kv.second.begin(), kv.second.end());
+          for (const Expr& cnd : kv.second)
+            bootCands[kv.first].insert(replaceAllRev(cnd, sfs[kv.first].back().lf.nonlinVars));
 
         if (multiHoudini(ruleManager.dwtoCHCs))
         {
@@ -3181,7 +3197,7 @@ namespace ufo
           for (const Expr& newpost : newposts)
           {
             // Check
-            if (bootstrapCheckCand(newpost, queryInvNum, true))
+            if (bootstrapCheckCand(newpost, queryInvNum, true, "1"))
               return true;
           }
         }
@@ -3197,7 +3213,8 @@ namespace ufo
     bool bootstrap2()
     {
       for (const auto& kv : candidates)
-        bootCands[kv.first].insert(kv.second.begin(), kv.second.end());
+        for (const Expr& cnd : kv.second)
+          bootCands[kv.first].insert(replaceAllRev(cnd, sfs[kv.first].back().lf.nonlinVars));
 
       if (alternver != 0)
       {
@@ -3215,7 +3232,9 @@ namespace ufo
         {
           candidates[kv.first].insert(candidates[kv.first].end(),
             kv.second.begin(), kv.second.end());
-          bootCands[kv.first].insert(kv.second.begin(), kv.second.end());
+          for (const Expr& dc : kv.second)
+            bootCands[kv.first].insert(replaceAllRev(dc, sfs[kv.first].back().lf.nonlinVars));
+          //bootCands[kv.first].insert(kv.second.begin(), kv.second.end());
         }
         if (multiHoudini(ruleManager.dwtoCHCs))
         {
@@ -3236,7 +3255,7 @@ namespace ufo
           for (const Expr& newpost : newposts)
           {
             // Check
-            if (bootstrapCheckCand(newpost, queryInvNum, true))
+            if (bootstrapCheckCand(newpost, queryInvNum, true, "2"))
               return true;
           }
         }
@@ -3906,12 +3925,15 @@ namespace ufo
       for (auto & t : tmp)
         if (hasOnlyVars(t, ruleManager.invVars[dcl]))
           cands[dcl].insert(t);
+      if (mut > 0) ds.mutateHeuristicEq(cands[dcl], cands[dcl], dcl, true);
       ds.addCandidates(dcl, cands[dcl]);
       if (dBoot)
         if (ds.bootstrap1()) return true;
 
-      if (mut > 0) ds.mutateHeuristicEq(cands[dcl], cands[dcl], dcl, true);
-      ds.initializeAux(cands[dcl], bnd, i, pref);
+      //tmp.clear();
+      ds.initializeAux(tmp, bnd, i, pref);
+      if (alternver != 3)
+        cands[dcl].insert(tmp.begin(), tmp.end());
     }
 
     ds.clearCache();
@@ -3925,14 +3947,19 @@ namespace ufo
     {
       for (int i = 0; i < doProp; i++)
         for (auto & a : cands[dcl]) ds.propagate(dcl, a, true);
-      ds.addCandidates(dcl, cands[dcl]);
-      ds.prepareSeeds(dcl, cands[dcl]);
+      ExprSet tmp = cands[dcl];
+      ds.prepareSeeds(dcl, tmp);
+      if (alternver != 3)
+      {
+        cands[dcl].insert(tmp.begin(), tmp.end());
+        ds.addCandidates(dcl, cands[dcl]);
+      }
     }
 
     if (dBoot)
       if (ds.bootstrap1()) return true;
 
-    if (dat > 0)
+    if (dat > 0 && alternver != 0)
     {
       map<Expr, ExprSet> dcands;
       ds.getDataCandidates(dcands);

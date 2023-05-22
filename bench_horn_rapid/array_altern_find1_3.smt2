@@ -20,8 +20,9 @@
 
 (rule (=> (and (inv a i r v N)
     (or (>= i N) (distinct r N))
-    (< r N)
-    (not (exists ((pos Int)) (= (select a pos) v))))
+    (not (=> (and (<= 0 N) (< r N))
+      (exists ((pos Int)) (= (select a pos) v))))
+  )
   fail))
 
 (query fail)

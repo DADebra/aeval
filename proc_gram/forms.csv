@@ -1,5 +1,5 @@
 Benchmark,Form
-check_equal_set_flag_0,$\exists.b$
+check_equal_set_flag_0,$e \Rightarrow \exists.b$
 collect_indices_equal_values_2,$\forall.(e \Rightarrow \exists.b)$
 collect_indices_equal_values_3,$\forall.(e \Rightarrow \exists.b)$
 copy_1,$\forall.\exists.b$
@@ -17,7 +17,8 @@ filter_1,$\forall.(e \Rightarrow \exists.b)$
 filter_quant_0,$\forall.\exists.b$
 filter_quant_1,$\forall.(e \Rightarrow \exists.b)$
 find1_2,$e \Rightarrow \exists.b$
-find1_3,$\exists.b$
+find1_3,$e \Rightarrow \exists.b$
+find2_2,$e \Rightarrow \exists.b$
 find2_3,$e \Rightarrow \exists.b$
 find_max_1,$(\exists.e) \Rightarrow \exists.b$
 find_max_local_0,$\forall.((\forall.e) \Rightarrow \exists.b)$
