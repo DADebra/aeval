@@ -2739,17 +2739,55 @@ namespace ufo
     }
 #endif
 
-    // Takes property and performs the core heuristic of range substitution.
-    // Returns a vector of potential candidates.
-    ExprVector generalizeArrQuery()
+    Expr pruneRangesAndBody(const Expr& e, const ExprUSet& qvars, bool inlhs)
     {
-      ExprVector ret(1);
+      if (isOpX<FDECL>(e) || isLit(e))
+        return e;
+      if (isOp<ComparissonOp>(e))
+        if ((qvars.count(e->left()) != 0 && !containsOp<SELECT>(e->right())) ||
+            (qvars.count(e->right()) != 0 && !containsOp<SELECT>(e->left())))
+        return NULL;
 
-      Expr newpost = NULL;
+      ExprVector newargs; newargs.reserve(e->arity());
+      bool nest_inlhs = inlhs || isOpX<IMPL>(e);
+      for (const Expr& arg : *e)
+      {
+        Expr na = pruneRangesAndBody(arg, qvars, nest_inlhs);
+        if (na)
+          newargs.push_back(na);
+        if (isOpX<IMPL>(e) && !inlhs)
+          nest_inlhs = false;
+      }
+      if (newargs.size() == 0)
+        return NULL;
+      if (newargs.size() == 1 && !isOpX<FAPP>(e))
+        return newargs[0];
+
+      if (!inlhs && (isOp<BinderOp>(e) || isOpX<IMPL>(e)) &&
+          !(isOp<BinderOp>(newargs.back()) || isOpX<IMPL>(newargs.back())))
+        newargs.back() = bind::boolConst(mkTerm<string>("DEF_CANDS", m_efac));
+
+      return mknary(e->op(), newargs.begin(), newargs.end());
+    }
+
+    Expr extractTemplate(Expr newpost)
+    {
+      if (isOpX<IMPL>(newpost))
+        return mk<IMPL>(newpost->left(), extractTemplate(newpost->right()));
+      ExprVector qvarsv;
+      orderedQVars(newpost, qvarsv);
+      ExprUSet qvars(qvarsv.begin(), qvarsv.end());
+
+      return pruneRangesAndBody(newpost, qvars, false);
+    }
+
+    Expr newpost = NULL;
+    Expr queryrel = NULL;
+    void getnewpost()
+    {
       ExprVector srcbodies;
       const ExprVector *locvars = NULL;
       // Find query body and loops
-      Expr queryrel;
       for (const auto& chc : ruleManager.chcs)
         if (chc.isQuery)
         {
@@ -2794,10 +2832,22 @@ namespace ufo
 
       newpost = regularizeQF(newpost);
 
-      newpost = mkNeg(newpost);
+      if (isOpX<NEG>(newpost))
+        newpost = newpost->left();
+      else
+        newpost = mkNeg(newpost);
 
       //newpost = alternRegQuants(newpost);
+    }
 
+    // Takes property and performs the core heuristic of range substitution.
+    // Returns a vector of potential candidates.
+    ExprVector generalizeArrQuery()
+    {
+      ExprVector ret(1);
+
+      if (!newpost)
+        getnewpost();
       ret.back() = newpost;
       if (alternver < 5)
         return std::move(ret);
@@ -2832,6 +2882,31 @@ namespace ufo
       perm(newpost, qvars.begin());
 
       return std::move(ret);
+    }
+
+    string autogenGram()
+    {
+      if (!newpost)
+        getnewpost();
+      Expr templ = extractTemplate(newpost);
+      if (printLog)
+      { outs() << "Extracted template: "; u.print(templ); outs() << endl; }
+
+      if (ruleManager.decls.size() > 1)
+      {
+        if (printLog) outs() << "Note: Auto-generated grammar unsupported for multiple invariants\n";
+        return "";
+      }
+
+      gramfile = "autogram-XXXXXX";
+      int gfd = mkstemp((char*)gramfile.data());
+      if (gfd < 0)
+        return "";
+      dprintf(gfd,
+        "(declare-fun ANY_INV () Bool)\n(assert (= ANY_INV %s))\n",
+        m_z3.toSmtLib(templ).c_str());
+      close(gfd);
+      return gramfile;
     }
 
     // Returns all quantified variables within `e` (recursing for nested
@@ -3911,7 +3986,12 @@ namespace ufo
                     dFwd, dRec, dGenerous, to, debug, smt, gramfile, sw, sl, alternver);
     ds.boot = dBoot;
 
+    string tmpgram;
+    if (gramfile.size() == 0)
+      tmpgram = ds.autogenGram();
+
     map<Expr, ExprSet> cands;
+    bool ret = false;
     for (int i = 0; i < ruleManager.cycles.size(); i++)
     {
       Expr dcl = ruleManager.chcs[ruleManager.cycles[i][0]].srcRelation;
@@ -3928,7 +4008,7 @@ namespace ufo
       if (mut > 0) ds.mutateHeuristicEq(cands[dcl], cands[dcl], dcl, true);
       ds.addCandidates(dcl, cands[dcl]);
       if (dBoot)
-        if (ds.bootstrap1()) return true;
+        if (ds.bootstrap1()) { ret = true; break; }
 
       //tmp.clear();
       ds.initializeAux(tmp, bnd, i, pref);
@@ -3936,7 +4016,13 @@ namespace ufo
         cands[dcl].insert(tmp.begin(), tmp.end());
     }
 
+    if (tmpgram.size() > 0)
+      unlink(tmpgram.c_str());
+
     ds.clearCache();
+
+    if (ret)
+      return true;
 
     if (ds.readLemmas())
       return true;
