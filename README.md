@@ -22,10 +22,10 @@ We also support the following other constants for `--altern-ver`:
  2. Lemmas from syntax and data but without the property, using a simpler
     form of the range algorithm which just uses the expression in `store` as-is.
     Needs both `--grammar` and `--data` options.
- 3. Lemmas from syntax and data w/o property with full form of range algorithm.
+ 3. Lemmas from data only w/o property with full form of range algorithm.
     Needs both `--grammar` and `--data` options.
- 4. Doesn't currently do anything, though it was intended to add
-    disjunctive candidates to Version 3.
+ 4. Lemmas from data and syntax w/o property with full form of range algorithm.
+    Needs both `--grammar` and `--data` options.
  5. Lemmas from syntax, data, and property with full range algorithm.
     Needs both `--grammar` and `--data` options.
 

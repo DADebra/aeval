@@ -295,6 +295,7 @@ namespace ufo
 
     bool addCandidate(int invNum, Expr cnd)
     {
+      // Uncomment to restrict to `var comp_op const`
       /*if (alternver == 3)
       {
         bool found = false;
@@ -302,6 +303,8 @@ namespace ufo
           if (contains(cnd, q->qv)) { found = true; break; }
         if (!found)
         {
+          // Uncomment to restrict to only quantified.
+          //return false;
           if (!(isOpX<GEQ>(cnd) || isOpX<LEQ>(cnd) || isOpX<GT>(cnd) || isOpX<LT>(cnd) || isOpX<EQ>(cnd)))
             return false;
           if (!(bind::IsConst()(cnd->left()) && isLit(cnd->right())) &&
@@ -4002,13 +4005,16 @@ namespace ufo
       Expr pref = bnd.compactPrefix(i);
       ExprSet tmp;
       getConj(pref, tmp);
-      for (auto & t : tmp)
-        if (hasOnlyVars(t, ruleManager.invVars[dcl]))
-          cands[dcl].insert(t);
-      if (mut > 0) ds.mutateHeuristicEq(cands[dcl], cands[dcl], dcl, true);
-      ds.addCandidates(dcl, cands[dcl]);
-      if (dBoot)
-        if (ds.bootstrap1()) { ret = true; break; }
+      if (alternver != 3)
+      {
+        for (auto & t : tmp)
+          if (hasOnlyVars(t, ruleManager.invVars[dcl]))
+            cands[dcl].insert(t);
+        if (mut > 0) ds.mutateHeuristicEq(cands[dcl], cands[dcl], dcl, true);
+        ds.addCandidates(dcl, cands[dcl]);
+        if (dBoot)
+          if (ds.bootstrap1()) { ret = true; break; }
+      }
 
       //tmp.clear();
       ds.initializeAux(tmp, bnd, i, pref);
